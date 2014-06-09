@@ -1,17 +1,38 @@
-class Annotation():
-  '''Class representing an annotation'''
-  def __init__(self, frame_id, id, (xmin, ymin, xmax, ymax), lost, occluded, generated, label):
-    self.frame_id = int(frame_id)
-    self.id = int(id)
-    self.bounding_box = (int(xmin), int(ymin), int(xmax), int(ymax))
-    self.lost = bool(int(lost))
-    self.occluded = bool(int(occluded))
-    self.generated = bool(int(generated))
-    self.label = label
-    
-  def __str__(self):
-    # Todo finish
-    return_string =  "Frame ID: %d\n" % (self.frame_id)
-    return_string += "Annotation ID: %d\n" % (self.annotation_id)
-    return_string += "Bounding box: (%d, %d, %d, %d)" % self.bounding_box
-    return return_string
+class Annotation(object):
+
+    def __init__(self, track_id, (xmin, ymin, xmax, ymax), frame, lost, occld=None, genertd=None, label=None):
+        self.track_id = int(track_id)
+        self.xmin = int(xmin)
+        self.ymin = int(ymin)
+        self.xmax = int(xmax)
+        self.ymax = int(ymax)
+        self.frame = int(frame)
+        self.lost = int(lost)
+        self.occld = int(occld)
+        self.genertd = int(genertd)
+        self.label = label
+
+    def cstr(self):
+        ret = str(self.frame) + ' ' + str(self.xmin) + ' ' + str(self.ymin) + ' '
+        ret += str(self.xmax) + ' ' + str(self.ymax) + ' ' + str(self.lost) + ' '
+        ret += str(self.occld) + ' ' + str(self.genertd)
+        return ret
+
+    def __gt__(self, other):
+        return self.frame > other.frame
+
+    def __eq__(self, other):
+        return self.frame == other.frame
+
+    def __str__(self):
+        ret = 'TrackID: ' + str(self.track_id)
+        ret += ' minX: ' + str(self.xmin)
+        ret += ' minY: ' + str(self.ymin)
+        ret += ' maxX: ' + str(self.xmax)
+        ret += ' maxY: ' + str(self.ymax)
+        ret += ' frame: ' + str(self.frame)
+        ret += ' lost: ' + str(self.lost)
+        ret += ' occld: ' + str(self.occld)
+        ret += ' genertd: ' + str(self.genertd)
+        ret += ' label: ' + str(self.label)
+        return ret
