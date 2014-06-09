@@ -11,12 +11,13 @@ class Patch(object):
         self.ymin = annotation.ymin
         self.xmax = annotation.xmax
         self.ymax = annotation.ymax
+        self.haar = None
 
         assert(not np.array_equal(np.ndarray([]), self.crop))
 
-    # def extractHaarFeatures(self):
-    #     pass
-    #
+    def update_haar_features(self, haar):
+        self.haar = haar
+
     # def extractHOGFeatures(self):
     #     pass
 
