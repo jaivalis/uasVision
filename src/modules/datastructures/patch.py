@@ -1,33 +1,34 @@
 import cv2
+import numpy as np
+
 
 class Patch(object):
 
-	def __init__(self, image, frameN, coords, height, width, label, haarFlag, hogFlag):
-		self.image  = image
-		self.frameN = frameN
-		self.coords = coords
-		self.h      = height
-		self.w      = width
-		self.label  = label
-		
-		self.haarF  = None
-		self.hogF   = None
+    def __init__(self, crop, annotation):
+        self.crop = crop
+        self.frame_id = annotation.frame
+        self.xmin = annotation.xmin
+        self.ymin = annotation.ymin
+        self.xmax = annotation.xmax
+        self.ymax = annotation.ymax
 
-		if haarFlag:
-			self.extractHaarFeatures()
-		if hogFlag:
-			self.extractHOGFeatures()
+        assert(not np.array_equal(np.ndarray([]), self.crop))
 
-	def extractHaarFeatures(self):
+    # def extractHaarFeatures(self):
+    #     pass
+    #
+    # def extractHOGFeatures(self):
+    #     pass
 
-		pass
+    def imshow(self):
+        show = np.divide(self.crop, 255.0)
+        cv2.imshow('Patch: imshow()', show)
+        cv2.waitKey()
 
-	def extractHOGFeatures(self):
-		
-		pass
-
-	def showImage(self):
-		cv2.imshow('img',img)
-		cv2.waitKey(0)
-		cv2.destroyAllWindows()
-
+    def __str__(self):
+        ret = 'Frame: ' + str(self.frame_id)
+        ret += ' xmin: ' + str(self.xmin)
+        ret += ' ymin: ' + str(self.ymin)
+        ret += ' xmax: ' + str(self.xmax)
+        ret += ' ymax: ' + str(self.ymax)
+        return ret

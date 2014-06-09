@@ -1,1 +1,2 @@
-__all__ = ["annotation", "detection", "track", "patch"]
+__author__ = 'jaivalis'
+all = ['annotation', 'patch']
