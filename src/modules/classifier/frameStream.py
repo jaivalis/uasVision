@@ -56,7 +56,7 @@ class VideoFileIS(InputStream):
 
     def imshow(self, frame, annotations):
         """
-        Shows the image number: frame alongside with the annotations
+        Shows the image.py number: frame alongside with the annotations
         """
         self.video.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, frame)
         ret, image = self.video.read()

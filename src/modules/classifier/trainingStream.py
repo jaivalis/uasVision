@@ -1,11 +1,10 @@
 import random
-import numpy as np
 import cv2
 
 from frameStream import VideoFileIS
 from modules.classifier.annotationStream import AnnotationStream
 from modules.datastructures.patch import Patch
-
+from modules.util import image_f
 
 class TrainingStream(object):
 
@@ -15,7 +14,7 @@ class TrainingStream(object):
         self.curr_image = None
         self.cursor = 0
 
-    def get_random_patches(self):
+    def get_random_patches(self, negative_count):
         annos = self.annotation_stream.get_annotated_frame_ids()
         rand = random.randint(0, len(annos)-1)
 
@@ -26,15 +25,38 @@ class TrainingStream(object):
 
         self.imshow(frame_id)
         assert len(annotations) > 0
-        return self.extract_patches(img, annotations)
+        return self.extract_patches(img, annotations, negative_count)
 
-    def extract_patches(self, img, annotations):
+    def extract_patches(self, img, annotations, negative_count):
+        ret = self.extract_positive_patches(img, annotations)
+        neg = self.extract_negative_patches(img, ret, negative_count)
+        ret.extend(neg)
+        return ret
+
+    def extract_positive_patches(self, img, annotations):
         ret = []
         for a in annotations:
             crop = img[a.ymin:a.ymax, a.xmin:a.xmax]
-            p = Patch(crop, a)
+            p = Patch(crop, a.frame_id, (a.xmin, a.ymin, a.xmax, a.ymax), +1)
             ret.append(p)
         return ret
+
+    def extract_negative_patches(self, img, positives, negative_count):
+        ret = []
+        frame_id = positives[0].frame_id
+        annotation_sizes = []
+        for p in positives:
+            annotation_sizes.append(p.size())
+
+        while len(ret) < negative_count:
+            random_size = annotation_sizes[random.randint(0, len(positives)) - 1]
+            random_patch = image_f.get_random_patch(img, random_size, frame_id)
+            if image_f.overlap(positives, random_patch):
+                continue
+            else:
+                ret.append(random_patch)
+        return ret
+
 
     def get_t(self):
         pass
@@ -53,7 +75,7 @@ class TrainingStream(object):
             y1 = annotation.minY
             x2 = annotation.maxX
             y2 = annotation.maxY
-            cv2.rectangle(self.curr_image, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            cv2.rectangle(self.curr_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
         cv2.imshow("trainingStream: showImage()", self.curr_image / 255)
         cv2.waitKey(5)

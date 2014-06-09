@@ -1,5 +1,106 @@
-import numpy as np
 import time
+
+from modules.util.image_f import *
+
+class HaarFeature(object):
+    def __init__(self, type, h, w):
+        self.type = type
+        self.h = h
+        self.w = w
+        self.hw = w/2
+        self.hh = h/2
+        self.tw = w/3
+        self.th = h/3
+
+    def __str__(self):
+        return "Type: %d, height: %d, width %d",  self.type, self.h, self.w
+
+    def apply(self, img, x, y):
+        ret = None
+        # TODO: compute integral image
+        # img = get_integral_image(img)
+
+        if self.type == 0:  # horizontal
+            #print 'D1= ' + str(x + width/2 - 1) + ',' + str(y + height - 1)
+            #print 'D2= ' + str(x + width - 1) + ',' + str(y + height - 1)
+            #print 'A1= ' + str(x) + ',' + str(y)
+            #print 'A2= ' + str(x + width/2) + ',' + str(y )
+            #print 'B1= ' + str(x + width/2 - 1) + ',' + str(y)
+            #print 'B2= ' + str(x + width - 1) + ',' + str(y)
+            #print 'C1= ' + str(x) + ',' + str(y + height - 1)
+            #print 'C2= ' + str(x + width/2) + ',' + str(y + height - 1)
+            rec1 = img[x + self.hw - 1, y + self.h - 1] + img[x, y] - img[x + self.hw - 1, y] - img[x , y + self.h - 1]
+            rec2 = img[x + self.w - 1, y + self.h - 1] + img[x + self.hw, y] - img[x + self.w - 1, y] - img[x + self.hw, y + self.h - 1]
+            ret = rec1 - rec2
+        if self.type == 1:  # vertical
+            #print 'D1= ' + str(x + width - 1) + ',' + str(y + height / 2 - 1)
+            #print 'D2= ' + str(x + width - 1) + ',' + str(y + height - 1)
+            #print 'A1= ' + str(x) + ',' + str(y)
+            #print 'A2= ' + str(x) + ',' + str(y + width)
+            #print 'B1= ' + str(x + width - 1) + ',' + str(y)
+            #print 'B2= ' + str(x + width - 1) + ',' + str(y + height / 2)
+            #print 'C1= ' + str(x) + ',' + str(y + height / 2 - 1)
+            #print 'C2= ' + str(x) + ',' + str(y + height - 1)
+            rec1 = img[x + self.w - 1, y + self.hh - 1] + img[x, y] - img[x + self.w - 1, y] - img[x, y + self.hh - 1]
+            rec2 = img[x + self.w - 1, y + self.h - 1] + img[x, y + self.h] - img[x + self.w - 1, y + self.hh] - img[x, y + self.h - 1]
+            ret = rec1 - rec2
+        if self.type == 2:  # horizontal
+            #print 'D1= ' + str(x + width/3 - 1) + ',' + str(y + height - 1)
+            #print 'D2= ' + str(x + 2 * width/3 - 1) + ',' + str(y + height - 1)
+            #print 'D3= ' + str(x + 3 * width/3 - 1) + ',' + str(y + height - 1)
+            #print 'A1= ' + str(x) + ',' + str(y)
+            #print 'A2= ' + str(x + width/3) + ',' + str(y )
+            #print 'A3= ' + str(x + 2 * width/3) + ',' + str(y)
+            #print 'B1= ' + str(x + width/3 - 1) + ',' + str(y)
+            #print 'B2= ' + str(x + 2 * width/3 - 1) + ',' + str(y)
+            #print 'B3= ' + str(x + 3 * width/3 - 1) + ',' + str(y)
+            #print 'C1= ' + str(x) + ',' + str(y + height - 1)
+            #print 'C2= ' + str(x + width/3) + ',' + str(y + height - 1)
+            #print 'C3= ' + str(x + 2 * width/3) + ',' + str(y + height - 1)
+            rec1 = img[x + self.tw - 1  , y + self.h - 1] + img[x, y] - img[x + self.tw - 1  , y] - img[x,          y + self.h - 1]
+            rec2 = img[x + 2*self.tw - 1, y + self.h - 1] + img[x + self.tw     , y] - img[x + 2*self.tw - 1, y] - img[x + self.tw,     y + self.h - 1]
+            rec3 = img[x + self.w - 1, y + self.h - 1] + img[x + 2 * self.tw, y] - img[x + self.w - 1, y] - img[x + 2 * self.tw, y + self.h - 1]
+            ret = rec1 + rec3 - rec2
+        if self.type == 3:  # vertical
+            #print 'D1= ' + str(x + width - 1) + ',' + str(y + height/3 - 1)
+            #print 'D2= ' + str(x + width - 1) + ',' + str(y + 2*height/3 - 1)
+            #print 'D3= ' + str(x + width - 1) + ',' + str(y + 3*height/3 - 1)
+            #print 'A1= ' + str(x) + ',' + str(y)
+            #print 'A2= ' + str(x) + ',' + str(y + height/3)
+            #print 'A3= ' + str(x) + ',' + str(y + 2 * height/3)
+            #print 'B1= ' + str(x) + ',' + str(y + height/3 - 1)
+            #print 'B2= ' + str(x) + ',' + str(y + 2 * height/3 - 1)
+            #print 'B3= ' + str(x) + ',' + str(y + 3 * height/3 - 1)
+            #print 'C1= ' + str(x + width - 1) + ',' + str(y)
+            #print 'C2= ' + str(x + width - 1) + ',' + str(y + height/3)
+            #print 'C3= ' + str(x + width - 1) + ',' + str(y + 2 * height/3)
+            rec1 = img[x + self.w - 1, y + self.th - 1] + img[x, y] - img[x, y + self.th - 1] - img[x + self.w - 1, y]
+            rec2 = img[x + self.w - 1, y + 2 * self.th - 1] + img[x, y + self.th] - img[x, y + 2 * self.th - 1] - img[x + self.w - 1, y + self.th]
+            rec3 = img[x + self.w - 1, y + self.h - 1] + img[x, y + 2 * self.th] - img[x, y + self.h - 1] - img[x + self.w - 1, y + 2 * self.th]
+            ret = rec1 + rec3 - rec2
+        if self.type == 4:  # four-rectangle features
+            #print 'D1= ' + str(x + width/2 - 1) + ',' + str(y + height/2 - 1)
+            #print 'D2= ' + str(x + width - 1) + ',' + str(y + height/2 - 1)
+            #print 'D3= ' + str(x + width/2 - 1) + ',' + str(y + height- 1)
+            #print 'D4= ' + str(x + width - 1) + ',' + str(y + height - 1)
+            #print 'A1= ' + str(x) + ',' + str(y)
+            #print 'A2= ' + str(x + width/2) + ',' + str(y )
+            #print 'A3= ' + str(x) + ',' + str(y + height/2)
+            #print 'A4= ' + str(x + width/2) + ',' + str(y + height/2)
+            #print 'B1= ' + str(x + width/2 - 1) + ',' + str(y)
+            #print 'B2= ' + str(x + width - 1) + ',' + str(y)
+            #print 'B3= ' + str(x + width/2 - 1) + ',' + str(y + height / 2)
+            #print 'B4= ' + str(x + width - 1) + ',' + str(y + height/2)
+            #print 'C1= ' + str(x) + ',' + str(y + height/2 - 1)
+            #print 'C2= ' + str(x + width/2) + ',' + str(y + height/2 - 1)
+            #print 'C3= ' + str(x) + ',' + str(y + height - 1)
+            #print 'C4= ' + str(x + width/2) + ',' + str(y + height - 1)
+            rec1 = img[x + self.hw - 1, y + self.hh-1] + img[x, y] - img[x + self.hw - 1, y] - img[x, y + self.hh - 1]
+            rec2 = img[x + self.w - 1, y + self.hh-1] + img[x + self.hw, y] - img[x + self.w - 1, y] - img[x + self.hw, y + self.hh - 1]
+            rec3 = img[x + self.hw - 1, y + self.h-1] + img[x, y + self.hh] - img[x + self.hw - 1, y + self.hh] - img[x, y + self.h - 1]
+            rec4 = img[x + self.w - 1, y + self.h-1] + img[x + self.hw, y + self.hh] - img[x + self.w - 1, y + self.hh] - img[x + self.hw, y + self.h - 1]
+            ret = rec2 + rec3 - rec1 - rec4
+        return ret
 
 
 class HaarExtractor(object):
@@ -10,9 +111,12 @@ class HaarExtractor(object):
 
     @staticmethod
     def extract_haar_features(crop):
+        """
+        Returns a dictionary containing <applied_feature, value> pairs
+        """
         w, h = crop.shape
         features = np.array([[2, 4], [4, 2], [2, 6], [6, 2], [4, 4]])
-        Haar = []
+        ret = {}
 
         # for each feature
         for feature in xrange(5):
@@ -27,110 +131,20 @@ class HaarExtractor(object):
                     for width in range(sizex, w - x + 1, sizex):
                         height = sizey/float(sizex) * width
 
-                        hw = width / 2
-                        hh = height / 2
-                        tw = width / 3
-                        th = height / 3
                         # TODO
                         if height + y >= h:
                             continue
-                            # edge features
-                        if feature == 0:
-                            # horizontal
-                            #print 'D1= ' + str(x + width/2 - 1) + ',' + str(y + height - 1)
-                            #print 'D2= ' + str(x + width - 1) + ',' + str(y + height - 1)
-                            #print 'A1= ' + str(x) + ',' + str(y)
-                            #print 'A2= ' + str(x + width/2) + ',' + str(y )
-                            #print 'B1= ' + str(x + width/2 - 1) + ',' + str(y)
-                            #print 'B2= ' + str(x + width - 1) + ',' + str(y)
-                            #print 'C1= ' + str(x) + ',' + str(y + height - 1)
-                            #print 'C2= ' + str(x + width/2) + ',' + str(y + height - 1)
-                            rec1 = crop[x + hw - 1, y + height - 1] + crop[x        , y] - crop[x + hw - 1, y] - crop[x          , y + height - 1]
-                            rec2 = crop[x + width - 1, y + height - 1] + crop[x + hw, y] - crop[x + width - 1, y] - crop[x + hw, y + height - 1]
-                            Haar.append(rec1 - rec2)
-                        elif feature == 1:
-                            # vertical
-                            #print 'D1= ' + str(x + width - 1) + ',' + str(y + height / 2 - 1)
-                            #print 'D2= ' + str(x + width - 1) + ',' + str(y + height - 1)
-                            #print 'A1= ' + str(x) + ',' + str(y)
-                            #print 'A2= ' + str(x) + ',' + str(y + width)
-                            #print 'B1= ' + str(x + width - 1) + ',' + str(y)
-                            #print 'B2= ' + str(x + width - 1) + ',' + str(y + height / 2)
-                            #print 'C1= ' + str(x) + ',' + str(y + height / 2 - 1)
-                            #print 'C2= ' + str(x) + ',' + str(y + height - 1)
-                            rec1 = crop[x + width - 1, y + hh - 1]     + crop[x, y]          - crop[x + width - 1, y]      - crop[x, y + hh - 1]
-                            rec2 = crop[x + width - 1, y + height - 1] + crop[x, y + height] - crop[x + width - 1, y + hh] - crop[x, y + height - 1]
-                            Haar.append(rec1 - rec2)
-                            # line features
-                        elif feature == 2:
-                            # horizontal
-                            #print 'D1= ' + str(x + width/3 - 1) + ',' + str(y + height - 1)
-                            #print 'D2= ' + str(x + 2 * width/3 - 1) + ',' + str(y + height - 1)
-                            #print 'D3= ' + str(x + 3 * width/3 - 1) + ',' + str(y + height - 1)
-                            #print 'A1= ' + str(x) + ',' + str(y)
-                            #print 'A2= ' + str(x + width/3) + ',' + str(y )
-                            #print 'A3= ' + str(x + 2 * width/3) + ',' + str(y)
-                            #print 'B1= ' + str(x + width/3 - 1) + ',' + str(y)
-                            #print 'B2= ' + str(x + 2 * width/3 - 1) + ',' + str(y)
-                            #print 'B3= ' + str(x + 3 * width/3 - 1) + ',' + str(y)
-                            #print 'C1= ' + str(x) + ',' + str(y + height - 1)
-                            #print 'C2= ' + str(x + width/3) + ',' + str(y + height - 1)
-                            #print 'C3= ' + str(x + 2 * width/3) + ',' + str(y + height - 1)
-                            rec1 = crop[x + tw - 1  , y + height - 1] + crop[x          , y] - crop[x + tw - 1  , y] - crop[x,          y + height - 1]
-                            rec2 = crop[x + 2*tw - 1, y + height - 1] + crop[x + tw     , y] - crop[x + 2*tw - 1, y] - crop[x + tw,     y + height - 1]
-                            rec3 = crop[x + width - 1, y + height - 1] + crop[x + 2 * tw, y] - crop[x + width - 1, y] - crop[x + 2 * tw,y + height - 1]
-                            Haar.append(rec1 + rec3 - rec2)
-                        elif feature == 3:
-                            # vertical
-                            #print 'D1= ' + str(x + width - 1) + ',' + str(y + height/3 - 1)
-                            #print 'D2= ' + str(x + width - 1) + ',' + str(y + 2*height/3 - 1)
-                            #print 'D3= ' + str(x + width - 1) + ',' + str(y + 3*height/3 - 1)
-                            #print 'A1= ' + str(x) + ',' + str(y)
-                            #print 'A2= ' + str(x) + ',' + str(y + height/3)
-                            #print 'A3= ' + str(x) + ',' + str(y + 2 * height/3)
-                            #print 'B1= ' + str(x) + ',' + str(y + height/3 - 1)
-                            #print 'B2= ' + str(x) + ',' + str(y + 2 * height/3 - 1)
-                            #print 'B3= ' + str(x) + ',' + str(y + 3 * height/3 - 1)
-                            #print 'C1= ' + str(x + width - 1) + ',' + str(y)
-                            #print 'C2= ' + str(x + width - 1) + ',' + str(y + height/3)
-                            #print 'C3= ' + str(x + width - 1) + ',' + str(y + 2 * height/3)
-                            rec1 = crop[x + width - 1, y + th - 1]     + crop[x, y]          - crop[x, y + th - 1]     - crop[x + width - 1, y]
-                            rec2 = crop[x + width - 1, y + 2 * th - 1] + crop[x, y + th]     - crop[x, y + 2 * th - 1] - crop[x + width - 1, y + th]
-                            rec3 = crop[x + width - 1, y + height - 1] + crop[x, y + 2 * th] - crop[x, y + height - 1] - crop[x + width - 1, y + 2 * th]
-                            Haar.append(rec1 + rec3 - rec2)
-                            # four-rectangle features
-                        elif feature == 4:
-                            #print 'D1= ' + str(x + width/2 - 1) + ',' + str(y + height/2 - 1)
-                            #print 'D2= ' + str(x + width - 1) + ',' + str(y + height/2 - 1)
-                            #print 'D3= ' + str(x + width/2 - 1) + ',' + str(y + height- 1)
-                            #print 'D4= ' + str(x + width - 1) + ',' + str(y + height - 1)
-                            #print 'A1= ' + str(x) + ',' + str(y)
-                            #print 'A2= ' + str(x + width/2) + ',' + str(y )
-                            #print 'A3= ' + str(x) + ',' + str(y + height/2)
-                            #print 'A4= ' + str(x + width/2) + ',' + str(y + height/2)
-                            #print 'B1= ' + str(x + width/2 - 1) + ',' + str(y)
-                            #print 'B2= ' + str(x + width - 1) + ',' + str(y)
-                            #print 'B3= ' + str(x + width/2 - 1) + ',' + str(y + height / 2)
-                            #print 'B4= ' + str(x + width - 1) + ',' + str(y + height/2)
-                            #print 'C1= ' + str(x) + ',' + str(y + height/2 - 1)
-                            #print 'C2= ' + str(x + width/2) + ',' + str(y + height/2 - 1)
-                            #print 'C3= ' + str(x) + ',' + str(y + height - 1)
-                            #print 'C4= ' + str(x + width/2) + ',' + str(y + height - 1)
-                            rec1 = crop[x + hw - 1, y + hh - 1]        + crop[x, y]           - crop[x + hw - 1, y]         - crop[x, y + hh - 1]
-                            rec2 = crop[x + width - 1, y + hh - 1]     + crop[x + hw, y]      - crop[x + width - 1, y]      - crop[x + hw, y + hh - 1]
-                            rec3 = crop[x + hw - 1, y + height- 1]     + crop[x, y + hh]      - crop[x + hw - 1, y + hh]    - crop[x, y + height - 1]
-                            rec4 = crop[x + width - 1, y + height - 1] + crop[x + hw, y + hh] - crop[x + width - 1, y + hh] - crop[x + hw, y + height - 1]
-                            Haar.append(rec2 + rec3 - rec1 - rec4)
+                        # edge features
+                        fitchure = HaarFeature(feature, height, width)
+                        e = fitchure.apply(crop, x, y)
+                        ret[fitchure] = e
+
             print "Features ", feature, ": ", time.time() - start_time, "seconds"
-            print "Size Haar: ", np.shape(Haar)
-        return Haar
+            print "Size Haar: ", np.shape(ret[fitchure])
+        return ret
 
 if __name__ == '__main__':
     im = np.random.rand(24, 24)
-    w, h = im.shape
-    ii = np.zeros((w, h))
-    for x in range(w):
-        for y in range(h):
-            ii[x, y] = np.sum(im[0:x+1, 0:y+1])
-    h = HaarFeatureExtractor()
+    ii = get_integral_image(im)
+    h = HaarExtractor()
     f = h.extract_haar_features(ii)

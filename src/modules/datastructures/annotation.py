@@ -1,28 +1,28 @@
 class Annotation(object):
 
-    def __init__(self, track_id, (xmin, ymin, xmax, ymax), frame, lost, occld=None, genertd=None, label=None):
+    def __init__(self, track_id, (xmin, ymin, xmax, ymax), frame_id, lost, occld=None, genertd=None, label=None):
         self.track_id = int(track_id)
         self.xmin = int(xmin)
         self.ymin = int(ymin)
         self.xmax = int(xmax)
         self.ymax = int(ymax)
-        self.frame = int(frame)
+        self.frame_id = int(frame_id)
         self.lost = int(lost)
         self.occld = int(occld)
         self.genertd = int(genertd)
         self.label = label
 
     def cstr(self):
-        ret = str(self.frame) + ' ' + str(self.xmin) + ' ' + str(self.ymin) + ' '
+        ret = str(self.frame_id) + ' ' + str(self.xmin) + ' ' + str(self.ymin) + ' '
         ret += str(self.xmax) + ' ' + str(self.ymax) + ' ' + str(self.lost) + ' '
         ret += str(self.occld) + ' ' + str(self.genertd)
         return ret
 
     def __gt__(self, other):
-        return self.frame > other.frame
+        return self.frame_id > other.frame
 
     def __eq__(self, other):
-        return self.frame == other.frame
+        return self.frame_id == other.frame
 
     def __str__(self):
         ret = 'TrackID: ' + str(self.track_id)
@@ -30,7 +30,7 @@ class Annotation(object):
         ret += ' minY: ' + str(self.ymin)
         ret += ' maxX: ' + str(self.xmax)
         ret += ' maxY: ' + str(self.ymax)
-        ret += ' frame: ' + str(self.frame)
+        ret += ' frame: ' + str(self.frame_id)
         ret += ' lost: ' + str(self.lost)
         ret += ' occld: ' + str(self.occld)
         ret += ' genertd: ' + str(self.genertd)

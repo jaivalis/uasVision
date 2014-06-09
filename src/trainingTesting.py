@@ -5,6 +5,7 @@ vidPaths = ['../dataset/videos/GOPR0809_start_0_27_end_1_55.mp4']
 annPaths = ['../dataset/annotations/sanitized/COW809_1_sane.txt']
 
 if __name__ == '__main__':
+    negative_count = 10
     ts = TrainingStream(vidPaths[0], annPaths[0])
 
     # while len(ts.getNextTrainingPatches()) == 0:
@@ -14,10 +15,11 @@ if __name__ == '__main__':
     # while True:
         # ts.getNextTrainingPatches()
         # ts.showCurrentImage()
-    patches = ts.get_random_patches()
+    patches = ts.get_random_patches(negative_count)
 
     h = HaarExtractor()
 
     for p in patches:
+        # if p.label == -1:
         p.imshow()
         h.update_patch_haar(p)
