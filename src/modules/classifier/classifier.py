@@ -1,7 +1,7 @@
 class StrongClassifier(object):
 
-    def __init__(self, trainingStream, alpha, beta, gamma):
-        self.trainingStream = trainingStream
+    def __init__(self, training_stream, alpha, beta, gamma):
+        self.training_stream = training_stream
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
@@ -12,7 +12,7 @@ class StrongClassifier(object):
 
     def train(self, patch):
         # TODO
-        self.trainingStream.getT()
+        self.training_stream.getT()
 
         return None
 
