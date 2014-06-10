@@ -6,8 +6,6 @@ from modules.datastructures.patch import Patch
 
 
 def get_downsampled(img):
-    w, h = img.shape
-    assert h > 23 and w > 23
     ret = imresize(img, (60, 60))
     return ret
 

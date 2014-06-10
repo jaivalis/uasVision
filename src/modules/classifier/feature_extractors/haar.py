@@ -29,11 +29,6 @@ class HaarFeature(object):
             #print 'C1= ' + str(x) + ',' + str(y + height - 1)
             #print 'C2= ' + str(x + width/2) + ',' + str(y + height - 1)
             rec1 = img[x + self.hw - 1, y + self.h - 1] + img[x, y] - img[x + self.hw - 1, y] - img[x, y + self.h - 1]
-            print x,y,self.h,self.w
-            D = img[x + self.w - 1, y + self.h - 1]
-            A = img[x + self.hw, y]
-            C = img[x + self.w - 1, y]
-            B = img[x + self.hw, y + self.h - 1]
             rec2 = img[x + self.w - 1, y + self.h - 1] + img[x + self.hw, y] - img[x + self.w - 1, y] - img[x + self.hw, y + self.h - 1]
             ret = rec1 - rec2
         if self.type == 1:  # vertical
@@ -118,12 +113,12 @@ class HaarExtractor(object):
         """
         Returns a dictionary containing <applied_feature, value> pairs
         """
-        w, h = crop.shape
         features = np.array([[2, 4], [4, 2], [2, 6], [6, 2], [4, 4]])
         ret = {}
 
-        # down_sampled = get_downsampled(crop)
-        integral = get_integral_image(crop)
+        down_sampled = get_downsampled(crop)
+        integral = get_integral_image(down_sampled)
+        w, h = down_sampled.shape
 
         # for each feature
         for feature in xrange(5):
