@@ -2,6 +2,7 @@ import time
 
 from modules.util.image_f import *
 
+
 class HaarFeature(object):
     def __init__(self, type, h, w):
         self.type = type
@@ -17,8 +18,6 @@ class HaarFeature(object):
 
     def apply(self, img, x, y):
         ret = None
-        # TODO: compute integral image
-        # img = get_integral_image(img)
 
         if self.type == 0:  # horizontal
             #print 'D1= ' + str(x + width/2 - 1) + ',' + str(y + height - 1)
@@ -118,6 +117,8 @@ class HaarExtractor(object):
         features = np.array([[2, 4], [4, 2], [2, 6], [6, 2], [4, 4]])
         ret = {}
 
+        integral = get_integral_image(crop)
+
         # for each feature
         for feature in xrange(5):
             start_time = time.time()
@@ -135,12 +136,12 @@ class HaarExtractor(object):
                         if height + y >= h:
                             continue
                         # edge features
-                        fitchure = HaarFeature(feature, height, width)
-                        e = fitchure.apply(crop, x, y)
-                        ret[fitchure] = e
+                        feat = HaarFeature(feature, height, width)
+                        e = feat.apply(integral, x, y)
+                        ret[feat] = e
 
             print "Features ", feature, ": ", time.time() - start_time, "seconds"
-            print "Size Haar: ", np.shape(ret[fitchure])
+            print "Size Haar: ", np.shape(ret[feat])
         return ret
 
 if __name__ == '__main__':
