@@ -6,6 +6,7 @@ from modules.classifier.annotationStream import AnnotationStream
 from modules.datastructures.patch import Patch
 from modules.util import image_f
 
+
 class TrainingStream(object):
 
     def __init__(self, vid_path, annotation_path):
@@ -14,7 +15,7 @@ class TrainingStream(object):
         self.curr_image = None
         self.cursor = 0
 
-    def get_random_patches(self, negative_count):
+    def get_random_patches(self, negative_count=10):
         annos = self.annotation_stream.get_annotated_frame_ids()
         rand = random.randint(0, len(annos)-1)
 
@@ -57,9 +58,8 @@ class TrainingStream(object):
                 ret.append(random_patch)
         return ret
 
-
-    def get_t(self):
-        pass
+    def size(self):
+        return len(self.annotation_stream.get_annotated_frame_ids())
 
     def imshow(self, frame):
         print 'showing image #', frame

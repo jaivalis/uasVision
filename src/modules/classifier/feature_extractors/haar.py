@@ -14,7 +14,7 @@ class HaarFeature(object):
         self.th = h/3
 
     def __str__(self):
-        return "Type: %d, height: %d, width %d",  self.type, self.h, self.w
+        return "Type: %d, height: %d, width %d" %(self.type, self.h, self.w)
 
     def apply(self, img, x, y):
         ret = None
@@ -28,7 +28,12 @@ class HaarFeature(object):
             #print 'B2= ' + str(x + width - 1) + ',' + str(y)
             #print 'C1= ' + str(x) + ',' + str(y + height - 1)
             #print 'C2= ' + str(x + width/2) + ',' + str(y + height - 1)
-            rec1 = img[x + self.hw - 1, y + self.h - 1] + img[x, y] - img[x + self.hw - 1, y] - img[x , y + self.h - 1]
+            rec1 = img[x + self.hw - 1, y + self.h - 1] + img[x, y] - img[x + self.hw - 1, y] - img[x, y + self.h - 1]
+            print x,y,self.h,self.w
+            D = img[x + self.w - 1, y + self.h - 1]
+            A = img[x + self.hw, y]
+            C = img[x + self.w - 1, y]
+            B = img[x + self.hw, y + self.h - 1]
             rec2 = img[x + self.w - 1, y + self.h - 1] + img[x + self.hw, y] - img[x + self.w - 1, y] - img[x + self.hw, y + self.h - 1]
             ret = rec1 - rec2
         if self.type == 1:  # vertical
@@ -56,7 +61,7 @@ class HaarFeature(object):
             #print 'C1= ' + str(x) + ',' + str(y + height - 1)
             #print 'C2= ' + str(x + width/3) + ',' + str(y + height - 1)
             #print 'C3= ' + str(x + 2 * width/3) + ',' + str(y + height - 1)
-            rec1 = img[x + self.tw - 1  , y + self.h - 1] + img[x, y] - img[x + self.tw - 1  , y] - img[x,          y + self.h - 1]
+            rec1 = img[x + self.tw - 1, y + self.h - 1] + img[x, y] - img[x + self.tw - 1, y] - img[x,          y + self.h - 1]
             rec2 = img[x + 2*self.tw - 1, y + self.h - 1] + img[x + self.tw     , y] - img[x + 2*self.tw - 1, y] - img[x + self.tw,     y + self.h - 1]
             rec3 = img[x + self.w - 1, y + self.h - 1] + img[x + 2 * self.tw, y] - img[x + self.w - 1, y] - img[x + 2 * self.tw, y + self.h - 1]
             ret = rec1 + rec3 - rec2
@@ -117,6 +122,7 @@ class HaarExtractor(object):
         features = np.array([[2, 4], [4, 2], [2, 6], [6, 2], [4, 4]])
         ret = {}
 
+        # down_sampled = get_downsampled(crop)
         integral = get_integral_image(crop)
 
         # for each feature
@@ -149,3 +155,4 @@ if __name__ == '__main__':
     ii = get_integral_image(im)
     h = HaarExtractor()
     f = h.extract_haar_features(ii)
+    print f.keys()[0]

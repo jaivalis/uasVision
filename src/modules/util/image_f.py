@@ -1,7 +1,15 @@
 import random
 import numpy as np
+from scipy.misc import imresize
 
 from modules.datastructures.patch import Patch
+
+
+def get_downsampled(img):
+    w, h = img.shape
+    assert h > 23 and w > 23
+    ret = imresize(img, (60, 60))
+    return ret
 
 
 def get_integral_image(img):
