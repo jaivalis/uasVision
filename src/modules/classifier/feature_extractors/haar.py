@@ -26,16 +26,19 @@ class HaarFeature(object):
         img = get_downsampled(img)
 
         if self.type == 0:  # horizontal
-            #print 'D1= ' + str(x + width/2 - 1) + ',' + str(y + height - 1)
-            #print 'D2= ' + str(x + width - 1) + ',' + str(y + height - 1)
-            #print 'A1= ' + str(x) + ',' + str(y)
-            #print 'A2= ' + str(x + width/2) + ',' + str(y )
-            #print 'B1= ' + str(x + width/2 - 1) + ',' + str(y)
-            #print 'B2= ' + str(x + width - 1) + ',' + str(y)
-            #print 'C1= ' + str(x) + ',' + str(y + height - 1)
-            #print 'C2= ' + str(x + width/2) + ',' + str(y + height - 1)
-            rec1 = img[x + self.hw - 1, y + self.h - 1] + img[x, y] - img[x + self.hw - 1, y] - img[x, y + self.h - 1]
-            rec2 = img[x + self.w - 1, y + self.h - 1] + img[x + self.hw, y] - img[x + self.w - 1, y] - img[x + self.hw, y + self.h - 1]
+            # print 'A1= ' + str(x) + ',' + str(y)
+            # print 'A2= ' + str(x + self.w/2) + ',' + str(y)
+            # print 'B1= ' + str(x + self.w/2 - 1) + ',' + str(y)
+            # print 'B2= ' + str(x + self.w - 1) + ',' + str(y)
+            # print 'C1= ' + str(x) + ',' + str(y + self.h - 1)
+            # print 'C2= ' + str(x + self.w/2) + ',' + str(y + self.h - 1)
+            # print 'D1= ' + str(x + self.hw/2 - 1) + ',' + str(y + self.h - 1)
+            # print 'D2= ' + str(x + self.w - 1) + ',' + str(y + self.h - 1)
+            # TODO: why always zero ?
+            rec1 = img[x + self.hw - 1, y + self.h - 1] + img[x, y] - \
+                   img[x + self.hw - 1, y] - img[x, y + self.h - 1]
+            rec2 = img[x + self.w - 1, y + self.h - 1] + img[x + self.hw, y] - \
+                   img[x + self.w - 1, y] - img[x + self.hw, y + self.h - 1]
             ret = rec1 - rec2
         if self.type == 1:  # vertical
             #print 'D1= ' + str(x + width - 1) + ',' + str(y + height / 2 - 1)

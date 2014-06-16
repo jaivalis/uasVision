@@ -1,6 +1,4 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.neighbors.kde import KernelDensity
+from modules.util.math_f import *
 
 
 class StrongClassifier(object):
@@ -13,7 +11,6 @@ class StrongClassifier(object):
         self.classifiers = []  # len(classifiers) = T
 
         # Parzen window
-
         # Phase1: Create all possible weak classifiers
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
@@ -36,7 +33,6 @@ class StrongClassifier(object):
             classifier.get_gaussian()
 
     def classify(self, patch):
-
         return None
 
     def train(self, frame_count):
@@ -66,7 +62,7 @@ class WeakClassifier(object):
         self.w = -1  # weight
 
         # used to calculate the standard deviation
-        self.responses = []  # TODO: split this into positive and negative?
+        self.responses = None  # TODO: split this into positive and negative?
 
     def classify(self, patch):
         """
@@ -78,9 +74,11 @@ class WeakClassifier(object):
     def train(self, patch):
         response = self.feature.apply(patch.crop)
         label = patch.label
-        self.responses.append([response, label])
-        # TODO switch on label ?
-        pass
+
+        if self.responses is None:
+            self.responses = np.array([response, label])
+        else:
+            self.responses = np.vstack((self.responses, [response, label]))
 
     def get_gaussian(self):
         """
@@ -88,13 +86,14 @@ class WeakClassifier(object):
         """
         # calculate \sigma
         sigma = np.std(self.responses)
+        # self.responses = self.responses[1]
+
         n = len(self.responses)
         h = 1.144 * sigma * n ** (-1/5)
 
-        gaussian = KernelDensity(kernel='gaussian', bandwidth=h)
-        plt.plot(gaussian)
-        plt.show()
-        return gaussian
+        plot_gaussian(self.responses, sigma, h)
+
+        return -1
 
 
     def __gt__(self, other):

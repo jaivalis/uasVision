@@ -26,7 +26,7 @@ if __name__ == '__main__':
     gamma = .8
 
 
-    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, 10)
+    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, 50)
 
 
     # for p in patches:
