@@ -24,7 +24,7 @@ class TrainingStream(object):
         annotations = self.annotation_stream.get_annotations(frame_id)
         img = self.input_stream.get_grayscale_img(frame_id)
 
-        self.imshow(frame_id)
+        # self.imshow(frame_id)
         assert len(annotations) > 0
         return self.extract_patches(img, annotations, negative_count)
 

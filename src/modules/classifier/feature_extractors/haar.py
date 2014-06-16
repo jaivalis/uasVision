@@ -1,23 +1,29 @@
-import time
-
 from modules.util.image_f import *
+from featureHolder import FeatureHolder
 
 
 class HaarFeature(object):
-    def __init__(self, type, h, w):
+    def __init__(self, type, h, w, x, y):
         self.type = type
-        self.h = h
-        self.w = w
-        self.hw = w/2
-        self.hh = h/2
-        self.tw = w/3
-        self.th = h/3
+        self.h = int(h)
+        self.w = int(w)
+        self.x = int(x)
+        self.y = int(y)
+        # caching for speed
+        self.hw = int(w/2)
+        self.hh = int(h/2)
+        self.tw = int(w/3)
+        self.th = int(h/3)
 
     def __str__(self):
-        return "Type: %d, height: %d, width %d" %(self.type, self.h, self.w)
+        return "Type: %d, height: %d, width: %d, x: %d, y: %d" % (self.type, self.h, self.w, self.x, self.y)
 
-    def apply(self, img, x, y):
+    def apply(self, img):  # TODO change signature to apply(self, patch)
         ret = None
+        x = self.x
+        y = self.y
+
+        img = get_downsampled(img)
 
         if self.type == 0:  # horizontal
             #print 'D1= ' + str(x + width/2 - 1) + ',' + str(y + height - 1)
@@ -102,52 +108,57 @@ class HaarFeature(object):
         return ret
 
 
-class HaarExtractor(object):
+class HaarHolder(FeatureHolder):
 
-    def update_patch_haar(self, patch):
-        features = self.extract_haar_features(patch.crop)
-        patch.update_haar_features(features)
-
-    @staticmethod
-    def extract_haar_features(crop):
-        """
-        Returns a dictionary containing <applied_feature, value> pairs
-        """
+    def __init__(self, (h, w)):
+        self.features = []
         features = np.array([[2, 4], [4, 2], [2, 6], [6, 2], [4, 4]])
-        ret = {}
 
-        down_sampled = get_downsampled(crop)
-        integral = get_integral_image(down_sampled)
-        w, h = down_sampled.shape
-
-        # for each feature
-        for feature in xrange(5):
-            start_time = time.time()
+        for feature in xrange(5):                                 # for each feature
             sizex = features[feature, 0]
             sizey = features[feature, 1]
-            # for each pixel in width
-            for x in range(w - sizex + 1):
-                # for each pixel in height
-                for y in range(h - sizey + 1):
-                    # for each width possible in window size
-                    for width in range(sizex, w - x + 1, sizex):
+            for x in range(w - sizex + 1):                        # for each pixel in width
+                for y in range(h - sizey + 1):                    # for each pixel in height
+                    for width in range(sizex, w - x + 1, sizex):  # for each width possible in window size
                         height = sizey/float(sizex) * width
 
                         # TODO
                         if height + y >= h:
                             continue
                         # edge features
-                        feat = HaarFeature(feature, height, width)
-                        e = feat.apply(integral, x, y)
-                        ret[feat] = e
+                        feat = HaarFeature(feature, height, width, x, y)
+                        self.features.append(feat)
 
-            print "Features ", feature, ": ", time.time() - start_time, "seconds"
-            print "Size Haar: ", np.shape(ret[feat])
-        return ret
+    def get_features(self):
+        return self.features
 
-if __name__ == '__main__':
-    im = np.random.rand(24, 24)
-    ii = get_integral_image(im)
-    h = HaarExtractor()
-    f = h.extract_haar_features(ii)
-    print f.keys()[0]
+    def get(self):
+        pass
+
+
+# class HaarExtractor(object):
+#
+#     def update_patch_haar(self, patch):
+#         features = self.extract_haar_features(patch.crop)
+#         patch.update_haar_features(features)
+#
+#     @staticmethod
+#     def extract_haar_features(crop):
+#         """
+#         Returns a dictionary containing <applied_feature, value> pairs
+#         """
+#
+#             print "Features ", feature, ": ", time.time() - start_time, "seconds"
+#             print "Size Haar: ", np.shape(ret[feat])
+#         return ret
+
+# if __name__ == '__main__':
+#     hh = HaarHolder((24, 24))
+#     for h in hh.features:
+#         print h
+
+    # im = np.random.rand(24, 24)
+    # ii = get_integral_image(im)
+    # h = HaarExtractor()
+    # f = h.extract_haar_features(ii)
+    # print f.keys()[0]

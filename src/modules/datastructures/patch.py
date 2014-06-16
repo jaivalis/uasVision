@@ -16,10 +16,10 @@ class Patch(object):
 
         assert(not np.array_equal(np.ndarray([]), self.crop))
 
-    def update_haar_features(self, haar):
+    def update_haar_features(self, haar):  # TODO safe delete
         self.haar = haar
 
-    # def extractHOGFeatures(self):
+    # def extractHOGFeatures(self):  # TODO safe delete
     #     pass
 
     def overlap(self, other):

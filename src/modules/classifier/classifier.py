@@ -1,21 +1,39 @@
-class StrongClassifier(object):
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.neighbors.kde import KernelDensity
 
-    def __init__(self, training_stream, alpha, beta, gamma, layers):
+
+class StrongClassifier(object):
+    def __init__(self, training_stream, feature_holder, alpha, beta, gamma, sample_count):
         self.training_stream = training_stream
+        self.feature_holder = feature_holder
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
         self.classifiers = []  # len(classifiers) = T
 
         # Parzen window
-        total_frame_cont = self.training_stream.size()
-        for i in xrange(total_frame_cont / layers):
-            patches = self.training_stream.get_random_patches()
 
-            for h in xrange(layers):
-                wc = WeakClassifier()
+        # Phase1: Create all possible weak classifiers
+        for feature in feature_holder.get_features():
+            wc = WeakClassifier(feature)
+            self.classifiers.append(wc)
+        print "Initialized %d weak classifiers." % (len(self.classifiers))
 
-        self.train()
+        # Phase2: Compute the classifier response for all the training patches
+        samples = 0
+        cll = 0
+        for classifier in self.classifiers:
+            cll += 1
+            while True:
+                for patch in training_stream.get_random_patches():
+                    samples += 1
+                    classifier.train(patch)
+
+                if samples > sample_count + 1:
+                    break
+            print "Done extracting feature #%d: " % cll + str(classifier)
+            classifier.get_gaussian()
 
     def classify(self, patch):
 
@@ -41,18 +59,57 @@ class StrongClassifier(object):
 
 
 class WeakClassifier(object):
-    def __init__(self):
+    def __init__(self, feature):
+        self.feature = feature
         self.theta_a = -1
         self.theta_b = -1
+        self.w = -1  # weight
+
+        # used to calculate the standard deviation
+        self.responses = []  # TODO: split this into positive and negative?
 
     def classify(self, patch):
         """
-        Returned values: -1, 0, +1
+        :return: values: -1, 0, +1
         """
+
         return None
+
+    def train(self, patch):
+        response = self.feature.apply(patch.crop)
+        label = patch.label
+        self.responses.append([response, label])
+        # TODO switch on label ?
+        pass
+
+    def get_gaussian(self):
+        """
+        :return: Two Gaussians functions, one per class. Each of those consists of the sum of Gaussians per class.
+        """
+        # calculate \sigma
+        sigma = np.std(self.responses)
+        n = len(self.responses)
+        h = 1.144 * sigma * n ** (-1/5)
+
+        gaussian = KernelDensity(kernel='gaussian', bandwidth=h)
+        plt.plot(gaussian)
+        plt.show()
+        return gaussian
+
 
     def __gt__(self, other):
         return False
 
     def __eq__(self, other):
         return False
+
+    def __str__(self):
+        ret = "Feature: {" + str(self.feature) + "}"
+        ret += " theta_A:" + str(self.theta_a) + " theta_B:"
+        ret += str(self.theta_b) + " w:" + str(self.w)
+        return ret
+
+        # calculation of the true positives:
+        #
+        # for every data point
+        # Gaussian centered on the feature return value with variance 1.144\sigma n^(-1/5)
