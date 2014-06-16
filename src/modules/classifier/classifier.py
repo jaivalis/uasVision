@@ -1,6 +1,4 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.neighbors.kde import KernelDensity
+from modules.util.math_f import *
 
 
 class StrongClassifier(object):
@@ -13,7 +11,6 @@ class StrongClassifier(object):
         self.classifiers = []  # len(classifiers) = T
 
         # Parzen window
-
         # Phase1: Create all possible weak classifiers
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
@@ -36,7 +33,6 @@ class StrongClassifier(object):
             classifier.get_gaussian()
 
     def classify(self, patch):
-
         return None
 
     def train(self, frame_count):
@@ -79,7 +75,6 @@ class WeakClassifier(object):
         response = self.feature.apply(patch.crop)
         label = patch.label
 
-        # TODO switch on label ?
         if self.responses is None:
             self.responses = np.array([response, label])
         else:
@@ -91,46 +86,14 @@ class WeakClassifier(object):
         """
         # calculate \sigma
         sigma = np.std(self.responses)
+        # self.responses = self.responses[1]
+
         n = len(self.responses)
         h = 1.144 * sigma * n ** (-1/5)
 
-        gaussian = KernelDensity(kernel='gaussian', bandwidth=h).fit(self.responses)
+        plot_gaussian(self.responses, sigma, h)
 
-        # plot Gaussian
-        X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
-        bins = np.linspace(-5, 10, 10)
-        fig, ax = plt.subplots(2, 2, sharex=True, sharey=True)
-        fig.subplots_adjust(hspace=0.05, wspace=0.05)
-
-        # histogram 1
-        # ax[0, 0].hist(self.responses[:, 0], bins=bins, fc='#AAAAFF', normed=True)
-        # ax[0, 0].text(-3.5, 0.31, "Histogram")
-        #
-        # # histogram 2
-        # ax[0, 1].hist(self.responses[:, 0], bins=bins + 0.75, fc='#AAAAFF', normed=True)
-        # ax[0, 1].text(-3.5, 0.31, "Histogram, bins shifted")
-        #
-        # # gaussian KDE
-        # kde = KernelDensity(kernel='gaussian', bandwidth=0.75).fit(self.responses)
-        # log_dens = kde.score_samples(X_plot)
-        # ax[1, 1].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
-        # ax[1, 1].text(-3.5, 0.31, "Gaussian Kernel Density")
-        #
-        # for axi in ax.ravel():
-        #     axi.plot(self.responses[:, 0], np.zeros(self.responses.shape[0]) - 0.01, '+k')
-        #     axi.set_xlim(-4, 9)
-        #     axi.set_ylim(-0.02, 0.34)
-        #
-        # for axi in ax[:, 0]:
-        #     axi.set_ylabel('Normalized Density')
-        #
-        # for axi in ax[1, :]:
-        #     axi.set_xlabel('x')
-
-
-    # plt.plot(gaussian)
-        # plt.show()
-        return gaussian
+        return -1
 
 
     def __gt__(self, other):
