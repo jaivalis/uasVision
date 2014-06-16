@@ -66,7 +66,7 @@ class WeakClassifier(object):
         self.w = -1  # weight
 
         # used to calculate the standard deviation
-        self.responses = []  # TODO: split this into positive and negative?
+        self.responses = None  # TODO: split this into positive and negative?
 
     def classify(self, patch):
         """
@@ -78,9 +78,12 @@ class WeakClassifier(object):
     def train(self, patch):
         response = self.feature.apply(patch.crop)
         label = patch.label
-        self.responses.append([response, label])
+
         # TODO switch on label ?
-        pass
+        if self.responses is None:
+            self.responses = np.array([response, label])
+        else:
+            self.responses = np.vstack((self.responses, [response, label]))
 
     def get_gaussian(self):
         """
@@ -91,9 +94,42 @@ class WeakClassifier(object):
         n = len(self.responses)
         h = 1.144 * sigma * n ** (-1/5)
 
-        gaussian = KernelDensity(kernel='gaussian', bandwidth=h)
-        plt.plot(gaussian)
-        plt.show()
+        gaussian = KernelDensity(kernel='gaussian', bandwidth=h).fit(self.responses)
+
+        # plot Gaussian
+        X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
+        bins = np.linspace(-5, 10, 10)
+        fig, ax = plt.subplots(2, 2, sharex=True, sharey=True)
+        fig.subplots_adjust(hspace=0.05, wspace=0.05)
+
+        # histogram 1
+        # ax[0, 0].hist(self.responses[:, 0], bins=bins, fc='#AAAAFF', normed=True)
+        # ax[0, 0].text(-3.5, 0.31, "Histogram")
+        #
+        # # histogram 2
+        # ax[0, 1].hist(self.responses[:, 0], bins=bins + 0.75, fc='#AAAAFF', normed=True)
+        # ax[0, 1].text(-3.5, 0.31, "Histogram, bins shifted")
+        #
+        # # gaussian KDE
+        # kde = KernelDensity(kernel='gaussian', bandwidth=0.75).fit(self.responses)
+        # log_dens = kde.score_samples(X_plot)
+        # ax[1, 1].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
+        # ax[1, 1].text(-3.5, 0.31, "Gaussian Kernel Density")
+        #
+        # for axi in ax.ravel():
+        #     axi.plot(self.responses[:, 0], np.zeros(self.responses.shape[0]) - 0.01, '+k')
+        #     axi.set_xlim(-4, 9)
+        #     axi.set_ylim(-0.02, 0.34)
+        #
+        # for axi in ax[:, 0]:
+        #     axi.set_ylabel('Normalized Density')
+        #
+        # for axi in ax[1, :]:
+        #     axi.set_xlabel('x')
+
+
+    # plt.plot(gaussian)
+        # plt.show()
         return gaussian
 
 
