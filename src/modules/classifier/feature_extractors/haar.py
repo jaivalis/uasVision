@@ -66,7 +66,7 @@ class HaarFeature(object):
             #print 'C2= ' + str(x + width/3) + ',' + str(y + height - 1)
             #print 'C3= ' + str(x + 2 * width/3) + ',' + str(y + height - 1)
             rec1 = img[x + self.tw - 1, y + self.h - 1] + img[x, y] - img[x + self.tw - 1, y] - img[x,          y + self.h - 1]
-            rec2 = img[x + 2*self.tw - 1, y + self.h - 1] + img[x + self.tw     , y] - img[x + 2*self.tw - 1, y] - img[x + self.tw,     y + self.h - 1]
+            rec2 = img[x + 2*self.tw - 1, y + self.h - 1] + img[x + self.tw, y] - img[x + 2*self.tw - 1, y] - img[x + self.tw,     y + self.h - 1]
             rec3 = img[x + self.w - 1, y + self.h - 1] + img[x + 2 * self.tw, y] - img[x + self.w - 1, y] - img[x + 2 * self.tw, y + self.h - 1]
             ret = rec1 + rec3 - rec2
         if self.type == 3:  # vertical

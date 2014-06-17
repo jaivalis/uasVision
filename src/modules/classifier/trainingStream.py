@@ -15,6 +15,13 @@ class TrainingStream(object):
         self.curr_image = None
         self.cursor = 0
 
+    def extract_training_patches(self, l, negative_count_per_frame=10):
+        ret = []
+        while len(ret) < l+1:
+            tmp = self.get_random_patches(negative_count_per_frame)
+            ret.extend(tmp)
+        return ret[0:l]
+
     def get_random_patches(self, negative_count=10):
         annos = self.annotation_stream.get_annotated_frame_ids()
         rand = random.randint(0, len(annos)-1)
@@ -26,15 +33,15 @@ class TrainingStream(object):
 
         # self.imshow(frame_id)
         assert len(annotations) > 0
-        return self.extract_patches(img, annotations, negative_count)
+        return self._extract_patches(img, annotations, negative_count)
 
-    def extract_patches(self, img, annotations, negative_count):
-        ret = self.extract_positive_patches(img, annotations)
-        neg = self.extract_negative_patches(img, ret, negative_count)
+    def _extract_patches(self, img, annotations, negative_count):
+        ret = self._extract_positive_patches(img, annotations)
+        neg = self._extract_negative_patches(img, ret, negative_count)
         ret.extend(neg)
         return ret
 
-    def extract_positive_patches(self, img, annotations):
+    def _extract_positive_patches(self, img, annotations):
         ret = []
         for a in annotations:
             crop = img[a.ymin:a.ymax, a.xmin:a.xmax]
@@ -42,7 +49,7 @@ class TrainingStream(object):
             ret.append(p)
         return ret
 
-    def extract_negative_patches(self, img, positives, negative_count):
+    def _extract_negative_patches(self, img, positives, negative_count):
         ret = []
         frame_id = positives[0].frame_id
         annotation_sizes = []

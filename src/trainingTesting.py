@@ -8,27 +8,16 @@ annPaths = ['../dataset/annotations/sanitized/COW809_1_sane.txt']
 
 if __name__ == '__main__':
     negative_count = 10
+
     ts = TrainingStream(vidPaths[0], annPaths[0])
-
-    # while len(ts.getNextTrainingPatches()) == 0:
-    # 	print ts.frameNum
-    # 	continue
-
-    # while True:
-        # ts.getNextTrainingPatches()
-        # ts.showCurrentImage()
-    patches = ts.get_random_patches(negative_count)
-
-    # h = HaarExtractor()
     hh = HaarHolder((24, 24))
 
     alpha = .9
     beta = 0
     gamma = .8
 
-    get_pickles()
-    # classifier = StrongClassifier(ts, hh, alpha, beta, gamma, 800)
-
+    # get_pickles()
+    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, layers=20, sample_count=100)
 
     # for p in patches:
     #     # if p.label == -1:
