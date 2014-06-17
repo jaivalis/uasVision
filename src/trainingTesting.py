@@ -1,6 +1,7 @@
 from modules.classifier.trainingStream import TrainingStream
 from modules.classifier.feature_extractors.haar import HaarHolder
 from modules.classifier.classifier import StrongClassifier
+from modules.util.serializer import *
 
 vidPaths = ['../dataset/videos/GOPR0809_start_0_27_end_1_55.mp4']
 annPaths = ['../dataset/annotations/sanitized/COW809_1_sane.txt']
@@ -25,8 +26,8 @@ if __name__ == '__main__':
     beta = 0
     gamma = .8
 
-
-    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, 50)
+    get_pickles()
+    # classifier = StrongClassifier(ts, hh, alpha, beta, gamma, 800)
 
 
     # for p in patches:

@@ -110,6 +110,9 @@ class HaarFeature(object):
             ret = rec2 + rec3 - rec1 - rec4
         return ret
 
+    def __eq__(self, other):
+        return self.h == other.h and self.w == other.h
+
 
 class HaarHolder(FeatureHolder):
 

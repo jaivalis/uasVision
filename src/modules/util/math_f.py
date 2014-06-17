@@ -16,14 +16,26 @@ def kernel_gaussian(x, h):
     return np.exp(-x**2 / (2*h**2))
 
 
-def sum_gaussian(data, linspa, h):
+def sum_of_gaussians(data, lin_space, h):
+    """
+    :param data: Data points only, no annotations (splitting must be done before)
+    :param lin_space: Usually np.linspace(min_neg, max_neg, 100)
+    :param h: Kernel width
+    :return: The function expressed as a sum of Gaussians for the given linear space
+    """
     ret = np.array([])
-    for x in linspa:
+    for x in lin_space:
         ret = np.append(ret, sum([kernel_gaussian(x - xi, h) for xi in data]) / (len(data) * h))
     return ret
 
 
-def plot_gaussian(data, sigma, h):
+def plot_gaussians(data, sigma, h):
+    """
+    :param data: As acquired from classifier, annotated
+    :param sigma: Standard deviation
+    :param h: Kernel width
+    :return: void
+    """
     ### Kernel Density Estimator
     positives = data[data[:, 1] == 1]
     negatives = data[data[:, 1] == -1]
@@ -34,7 +46,7 @@ def plot_gaussian(data, sigma, h):
     first = True
     for xx in positives:
         x = xx[0]
-        kernel_xs = np.linspace(x - 5*sigma, x + 5*sigma)
+        kernel_xs = np.linspace(x - 2*sigma, x + 2*sigma)
         kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma)) * 0.4  # scaling just so it looks better
         if first:
             ax[0].plot(kernel_xs, kernel_ys, 'b--', linewidth=1, label=' positive Kernels')
@@ -44,8 +56,8 @@ def plot_gaussian(data, sigma, h):
     first = True
     for xx in negatives:
         x = xx[0]
-        kernel_xs = np.linspace(x - 5*sigma, x + 5*sigma)
-        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma)) * 0.4 # scaling just so it looks better
+        kernel_xs = np.linspace(x - 2*sigma, x + 2*sigma)
+        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma)) * 0.4  # scaling just so it looks better
         if first:
             ax[1].plot(kernel_xs, kernel_ys, 'r--', linewidth=1, label=' negative Kernels')
             first = False
@@ -58,8 +70,8 @@ def plot_gaussian(data, sigma, h):
     max_pos = max(positives[:, 0]) + 20
     xs_n = np.linspace(min_neg, max_neg, 100)
     xs_p = np.linspace(min_pos, max_pos, 100)
-    kde_n = sum_gaussian(negatives[:, 0], xs_n, h)
-    kde_p = sum_gaussian(positives[:, 0], xs_p, h)
+    kde_n = sum_of_gaussians(negatives[:, 0], xs_n, h)
+    kde_p = sum_of_gaussians(positives[:, 0], xs_p, h)
     # plot Kernel density estimation
     ax[0].plot(xs_p, kde_p, linewidth=3, color='blue', label='positive KDE')
     ax[1].plot(xs_n, kde_n, linewidth=3, color='red', label='negative KDE')
