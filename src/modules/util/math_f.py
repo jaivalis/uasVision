@@ -2,9 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def append_gaussian(gmm, gaussian, lin_space):
+    ret = None
+    if gmm is None:
+        ret = gaussian
+    else:
+        for x in lin_space:
+            ret = np.append(ret, gmm[x] + gaussian[x])
+        pass
+    return ret
+
+
 ### Gaussian PDF
 def p_gaussian(x, mu, sigma):
-    return 1/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (x - mu)**2 / (2 * sigma**2))
+    return 1/(sigma * np.sqrt(2 * np.pi)) * np.exp(- (x - mu)**2 / (2 * sigma**2))
 
 
 def pdf_gaussian(xs, mu, sigma):
@@ -72,6 +83,7 @@ def plot_gaussians(data, sigma, h):
     xs_p = np.linspace(min_pos, max_pos, 100)
     kde_n = sum_of_gaussians(negatives[:, 0], xs_n, h)
     kde_p = sum_of_gaussians(positives[:, 0], xs_p, h)
+
     # plot Kernel density estimation
     ax[0].plot(xs_p, kde_p, linewidth=3, color='blue', label='positive KDE')
     ax[1].plot(xs_n, kde_n, linewidth=3, color='red', label='negative KDE')

@@ -118,7 +118,7 @@ class HaarHolder(FeatureHolder):
 
     def __init__(self, (h, w)):
         self.features = []
-        features = np.array([[2, 4], [4, 2], [2, 6], [6, 2], [4, 4]])
+        features = np.array([[4, 8], [8, 4], [4, 12], [12, 4], [8, 8]])
 
         for feature in xrange(5):                                 # for each feature
             sizex = features[feature, 0]
