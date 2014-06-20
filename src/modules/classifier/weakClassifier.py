@@ -46,7 +46,9 @@ class WeakClassifier(object):
             self.annotated_responses = np.vstack((self.annotated_responses, [response, label]))
 
     def train(self, weighted_patches):
-        """ Find the threshold that produces the lowest error
+        """
+        Given a training set T, finds the threshold that produces the lowest error and updates the error value of
+        the classifier.
         """
         for p, w in weighted_patches.iteritems():
             response = self.feature.apply(p.crop)
@@ -63,26 +65,41 @@ class WeakClassifier(object):
 
         # find which class occupies the left and which the right portion of the responses
         response_values.sort()
-        median = response_values[len(self.annotated_responses) / 2]
+        median = response_values[len(self.annotated_responses) / 2] + .5
 
-        weight_pos_left = 0
-        weight_pos_right = 0
+        weight_pos_left = weight_pos_right = 0
+        weight_neg_left = weight_neg_right = 0
         for [response, true_label, w] in self.annotated_responses:
-            if true_label != +1:
-                continue
-            if response < median:
-                weight_pos_left += w
-            else:
-                weight_pos_right += w
+            if true_label == +1:
+                if response < median:
+                    weight_pos_left += w
+                else:
+                    weight_pos_right += w
+            elif true_label == -1:
+                if response < median:
+                    weight_neg_left += w
+                else:
+                    weight_neg_right += w
 
-        if weight_pos_left < weight_pos_right:
+        if weight_pos_left < weight_pos_right and weight_neg_left > weight_neg_right:
             self.dominant_left = -1
             left = neg_response_values
             right = pos_response_values
-        else:
+        elif weight_pos_left > weight_pos_right and weight_neg_left < weight_neg_right:
             self.dominant_left = +1
             left = pos_response_values
             right = neg_response_values
+        else:  # equal number on one side
+            if weight_neg_left > weight_pos_left:
+                self.dominant_left = -1
+                left = neg_response_values
+                right = pos_response_values
+            elif weight_neg_left < weight_pos_left:
+                self.dominant_left = +1
+                left = pos_response_values
+                right = neg_response_values
+            else:
+                raise "What were the odds?"
 
         for t in response_values:
             thr = t + .5

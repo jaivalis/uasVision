@@ -41,7 +41,7 @@ class StrongClassifier(object):
         # Phase3: Algorithm2: Learning with bootstrapping
         self.learn_with_bootstrapping(sample_count)
 
-    def learn_with_bootstrapping(self, sample_count):
+    def learn_with_bootstrapping(self, sample_count=1000):
         """ Algorithm2 Sochman
         Outputs the strong classifier with the theta_a, theta_b of the weak classifiers updated
         """
@@ -57,37 +57,33 @@ class StrongClassifier(object):
 
         for t in range(self.layers+1):
             # choose the weak classifier with the minimum error
-            h_t = self._find_optimal_weak_classifier(weighted_patches)
-            # add it to the strong classifier
-            self.classifiers.append(h_t)
+            h_t = self._fetch_best_weak_classifier(weighted_patches)
+            self.classifiers.append(h_t)    # add it to the strong classifier
 
             # find decision thresholds for the strong classifier
             self._tune_thresholds(t)
 
-            # throw away training samples for which
+            # throw away training samples that fall in our thresholds
 
             # sample new training data
         return
 
     def _tune_thresholds(self, layer):
-        """
-        :return:
-        """
-
+        """ Update the threshold of the classifier """
         pass
 
-    def _find_optimal_weak_classifier(self, weighted_patches):
-        """ Returns the weak classifier with the least error
-        :param weighted_patches:
-        :return:
+    def _fetch_best_weak_classifier(self, weighted_patches):
+        """ Returns the weak classifier that produces the least error
+        :param weighted_patches: Weighted training set
+        :return: The best classifier
         """
-        # patches = weighted_patches.keys()
+        min_error = 2.
         for wc in self.all_classifiers:
             wc.train(weighted_patches)
-        self.all_classifiers.sort()
-        # self.all_classifiers[0].plot_gaussian()
-
-        return self.all_classifiers[0]
+            if wc.error < min_error:
+                ret = wc
+        # ret.plot_gaussian()
+        return ret
 
     def h_t(self, t, x):
         """ H_t(x) returns the summation of the responses of the first t weak classifiers.
