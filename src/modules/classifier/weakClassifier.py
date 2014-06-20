@@ -59,13 +59,13 @@ class WeakClassifier(object):
             else:
                 self.annotated_responses = np.vstack((self.annotated_responses, [response, true_label, w]))
 
+        self.annotated_responses = self.annotated_responses
         response_values = self.annotated_responses[:, 0]
         pos_response_values = self.annotated_responses[self.annotated_responses[:, 1] == 1]
         neg_response_values = self.annotated_responses[self.annotated_responses[:, 1] == -1]
 
         # find which class occupies the left and which the right portion of the responses
-        response_values.sort()
-        median = response_values[len(self.annotated_responses) / 2] + .5
+        median = np.median(response_values) + 0.5
 
         weight_pos_left = weight_pos_right = 0
         weight_neg_left = weight_neg_right = 0
