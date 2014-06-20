@@ -69,37 +69,30 @@ class WeakClassifier(object):
 
         weight_pos_left = weight_pos_right = 0
         weight_neg_left = weight_neg_right = 0
+        weight_total_pos = weight_total_neg = 0
         for [response, true_label, w] in self.annotated_responses:
             if true_label == +1:
+                weight_total_pos += w
                 if response < median:
                     weight_pos_left += w
                 else:
                     weight_pos_right += w
             elif true_label == -1:
+                weight_total_neg += w
                 if response < median:
                     weight_neg_left += w
                 else:
                     weight_neg_right += w
-
-        if weight_pos_left < weight_pos_right and weight_neg_left > weight_neg_right:
+        left_pos_concentration = weight_pos_left / weight_total_pos
+        left_neg_concentration = weight_neg_left / weight_total_neg
+        if left_neg_concentration > left_pos_concentration:
             self.dominant_left = -1
             left = neg_response_values
             right = pos_response_values
-        elif weight_pos_left > weight_pos_right and weight_neg_left < weight_neg_right:
+        else:
             self.dominant_left = +1
             left = pos_response_values
             right = neg_response_values
-        else:  # equal number on one side
-            if weight_neg_left > weight_pos_left:
-                self.dominant_left = -1
-                left = neg_response_values
-                right = pos_response_values
-            elif weight_neg_left < weight_pos_left:
-                self.dominant_left = +1
-                left = pos_response_values
-                right = neg_response_values
-            else:
-                raise "What were the odds?"
 
         for t in response_values:
             thr = t + .5
