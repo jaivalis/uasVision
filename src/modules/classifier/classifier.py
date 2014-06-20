@@ -1,4 +1,5 @@
 from modules.classifier.weakClassifier import WeakClassifier
+from modules.util.math_f import *
 
 
 class StrongClassifier(object):
@@ -60,6 +61,7 @@ class StrongClassifier(object):
             h_t = self._fetch_best_weak_classifier(weighted_patches)
             self.classifiers.append(h_t)    # add it to the strong classifier
 
+            self._estimate_ratio(weighted_patches, t)
             # find decision thresholds for the strong classifier
             self._tune_thresholds(t)
 
@@ -67,6 +69,31 @@ class StrongClassifier(object):
 
             # sample new training data
         return
+
+    def _estimate_ratio(self, weighted_patches, t):
+        """ Real Adaboost for feature selection, right ?
+        :param weighted_patches:
+        :return:
+        """
+        pos_responses = neg_responses = None
+        for p, w in weighted_patches.iteritems():
+            response = self.h_t(p, t)
+            true_label = p.label
+            # append to the responses
+            if p.label == +1:
+                if pos_responses is None:
+                    pos_responses = np.array([response, true_label, w])
+                else:
+                    pos_responses = np.vstack((pos_responses, [response, true_label, w]))
+            elif p.label == -1:
+                if neg_responses is None:
+                    neg_responses = np.array([response, true_label, w])
+                else:
+                    neg_responses = np.vstack((neg_responses, [response, true_label, w]))
+        # Compute Cumulative conditional probabilities of classes
+        plot_histograms(pos_responses, neg_responses)
+
+
 
     def _tune_thresholds(self, layer):
         """ Update the threshold of the classifier """
@@ -85,14 +112,14 @@ class StrongClassifier(object):
         # ret.plot_gaussian()
         return ret
 
-    def h_t(self, t, x):
+    def h_t(self, x, t):
         """ H_t(x) returns the summation of the responses of the first t weak classifiers.
         :param t: Layer count
         :param x: Patch to be classified
         :return: H_t(x)
         """
         ret = 0
-        for wc in self.classifiers[0:t]:
+        for wc in self.classifiers[0:t+1]:
             ret += wc.classify(x)
         return ret
 

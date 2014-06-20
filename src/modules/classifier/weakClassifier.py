@@ -13,25 +13,22 @@ class WeakClassifier(object):
         self.dominant_left = None
 
     def classify(self, patch):
-        """ Returns [the probability of the patch being of the +1 class]
+        """ Returns
         :return:
         """
         response = self.feature.apply(patch.crop)
         if response < self.threshold:
-            epsilon = 1. / 2.*self.annotated_responses[self.annotated_responses[:, 1] < self.threshold]
+            epsilon = 1. / 2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold])
             pos = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
-            cor = pos[pos[:, 0] < self.threshold]
-            inc = pos[pos[:, 0] > self.threshold]
-            return .5 * np.log(cor + epsilon/(inc + epsilon))
+            cor = sum(pos[pos[:, 0] < self.threshold][:, 2])
+            inc = sum(pos[pos[:, 0] > self.threshold][:, 2])
+            return .5 * np.log((cor + epsilon)/(inc + epsilon))
         else:
-            epsilon = 1. / 2.*self.annotated_responses[self.annotated_responses[:, 1] < self.threshold]
+            epsilon = 1. / 2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold])
             pos = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
-            cor = pos[pos[:, 0] > self.threshold]
-            inc = pos[pos[:, 0] < self.threshold]
-            return .5 * np.log(cor + epsilon/(inc + epsilon))
-
-    def classify_weighted_patches(self, weighted_patches):
-        pass
+            cor = sum(pos[pos[:, 0] > self.threshold][:, 2])
+            inc = sum(pos[pos[:, 0] < self.threshold][:, 2])
+            return .5 * np.log((cor + epsilon) / (inc + epsilon))
 
     def store_response(self, patch):
         """ For a given patch saves the response in self.responses
@@ -39,7 +36,6 @@ class WeakClassifier(object):
         response = self.feature.apply(patch.crop)
         label = patch.label
 
-        # append to the responses (used for standard deviation)
         if self.annotated_responses is None:
             self.annotated_responses = np.array([response, label])
         else:

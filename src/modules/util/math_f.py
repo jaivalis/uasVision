@@ -2,6 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def plot_histograms(pos_labeled_data, neg_labeled_data):
+    height = pos_labeled_data[:, 0]
+    # hist, bins = np.histogram(height, 50)
+    # center = (min(pos_labeled_data[:, 1]) + max(pos_labeled_data[:, 1])) / 2
+    plt.hist(height, bins=10)
+    plt.show()
+    # plt.bar(center, hist, align='center', width=99)
+    # plt.show()
+
+
 def append_gaussian(gmm, gaussian, lin_space):
     ret = None
     if gmm is None:
