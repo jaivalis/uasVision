@@ -17,10 +17,11 @@ class TrainingStream(object):
 
     def extract_training_patches(self, l, negative_count_per_frame=10):
         ret = []
+        print 'Extracting', l, 'training samples...'
         while len(ret) < l+1:
             tmp = self.get_random_patches(negative_count_per_frame)
             ret.extend(tmp)
-        print 'Done extracting ', l, ' training samples'
+        print 'Done extracting training samples'
         return ret[0:l]
 
     def get_random_patches(self, negative_count=10):

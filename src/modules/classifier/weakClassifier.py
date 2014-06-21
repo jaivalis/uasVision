@@ -12,6 +12,13 @@ class WeakClassifier(object):
         # The sign of the dominant class left of the threshold
         self.dominant_left = None
 
+    def classify_batch(self, X):  # TODO
+        """ Classifies a sample of
+        :param X:
+        :return:
+        """
+        pass
+
     def classify(self, patch):
         """ Returns
         :return:
@@ -46,7 +53,7 @@ class WeakClassifier(object):
         Given a training set T, finds the threshold that produces the lowest error and updates the error value of
         the classifier.
         """
-        for p, w in weighted_patches.iteritems():
+        for p, w in weighted_patches:
             response = self.feature.apply(p.crop)
             true_label = p.label
             # append to the responses

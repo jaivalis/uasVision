@@ -1,6 +1,6 @@
 from modules.classifier.weakClassifier import WeakClassifier
 from modules.util.math_f import *
-from modules.util.datastructures import *
+from modules.util.datastructures_f import *
 
 
 class StrongClassifier(object):
@@ -47,13 +47,13 @@ class StrongClassifier(object):
         """ Algorithm2 Sochman
         Outputs the strong classifier with the theta_a, theta_b of the weak classifiers updated
         """
-        training_set_size = 500.
+        training_set_size = 50  # TODO: change to 1000, 500 or something
         sample_pool = self.training_stream.extract_training_patches(sample_count)
         # initialize weights
-        weighted_patches = {}
+        weighted_patches = []
         for patch in sample_pool:                              # weight all patches
-            weighted_patches[patch] = 1. / len(sample_pool)
-        training_data = weighted_patches[0:training_set_size]  # sample 'training_set_size' many samples
+            weighted_patches.append([patch, 1. / len(sample_pool)])
+        training_data = random_sample(weighted_patches, training_set_size)  # sample 'training_set_size' many samples
 
         for t in range(self.layers+1):
             # choose the weak classifier with the minimum error
@@ -65,24 +65,23 @@ class StrongClassifier(object):
             self._tune_thresholds(pos, neg, t)
 
             # throw away training samples that fall in our thresholds
-            sample_pool = self._reweight_and_discard_irrelevant(sample_pool, t)
+            weighted_patches = self._reweight_and_discard_irrelevant(weighted_patches, t)
             
             # sample new training data
-            training_data = random_dict_sample(weighted_patches, training_set_size)
-        return
+            training_data = random_sample(weighted_patches, training_set_size)
 
     def _reweight_and_discard_irrelevant(self, weighted_sample_pool, t):
-        """ Throws away training samples that fall in the predefined thresholds and re weights the patches
+        """ Throws away training samples that fall in the predefined thresholds and reweights the patches
         :param weighted_sample_pool: A set of training samples
         :param t: layer number
         :return: The filtered set of training samples
         """
-        ret = {}
+        ret = []
         wc = self.classifiers[t]
         theta_a = wc.theta_a
         theta_b = wc.theta_b
-        for patch, w in weighted_sample_pool.iteritems():
-            response = h_t(patch, t)
+        for patch, w in weighted_sample_pool:
+            response = self.h_t(patch, t)
             if response < theta_a or response > theta_b:
                 continue
             else:
@@ -91,9 +90,9 @@ class StrongClassifier(object):
                 label = patch.label
                 new_weight = w * np.exp(-label * r)
 
-                ret[patch] = new_weight
+                ret.append([patch, new_weight])
         # normalize weights
-        for patch, w in ret.iteritems():
+        for patch, w in ret:
             pass
         return ret
 
@@ -104,7 +103,7 @@ class StrongClassifier(object):
         :return:
         """
         pos_responses = neg_responses = None
-        for p, w in weighted_patches.iteritems():
+        for p, w in weighted_patches:
             response = self.h_t(p, t)
             true_label = p.label
             # append to the responses
@@ -122,7 +121,7 @@ class StrongClassifier(object):
         #plot_histograms(pos_responses, neg_responses)
         data = np.append(pos_responses, neg_responses, axis=0)
         plot_gaussians(data, 0.5, 0.5)
-        # compute gaussians for negatve and positive classes
+        # compute gaussians for negative and positive classes
         sigma_neg = np.std(neg_responses)
         sigma_pos = np.std(pos_responses)
         h_neg = 1.144 * sigma_neg * len(neg_responses) ** -0.2
@@ -134,13 +133,11 @@ class StrongClassifier(object):
 
     def _tune_thresholds(self, pos_gaussian, neg_gaussian, t):
         """ Update the threshold of the weak classifier using this algorithm:
-        http://personal.ee.surrey.ac.uk/Personal/Z.Kalal/Publications/2007_MSc_thesis.pdf
+        http://personal.ee.surrey.ac.uk/Personal/Z.Kalal/Publications/2007_MSc_thesis.pdf pages 37, 38
         :param pos_gaussian: Sum of positive class gaussians
         :param neg_gaussian: Sum of negative class gaussians
         :param t: layer number
         """
-        #
-        # page 37, 38
         index = 0
         for theta_a_candidate in np.linspace(-1, 1, num=1000):
             if neg_gaussian[index] < theta_a_candidate and pos_gaussian[index] < theta_a_candidate:
