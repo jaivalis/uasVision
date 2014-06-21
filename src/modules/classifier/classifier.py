@@ -1,5 +1,6 @@
 from modules.classifier.weakClassifier import WeakClassifier
 from modules.util.math_f import *
+from modules.util.datastructures import *
 
 
 class StrongClassifier(object):
@@ -21,7 +22,7 @@ class StrongClassifier(object):
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
             self.all_classifiers.append(wc)
-        self.all_classifiers = self.all_classifiers[-10:len(self.all_classifiers)]  #TODO remove this, testing
+        self.all_classifiers = self.all_classifiers[-10:len(self.all_classifiers)]  # TODO remove this, testing
         print "Initialized %d weak classifiers." % (len(self.all_classifiers))
 
         # # Phase2: Compute the classifier response for all the training patches
@@ -42,34 +43,64 @@ class StrongClassifier(object):
         # Phase3: Algorithm2: Learning with bootstrapping
         self.learn_with_bootstrapping(sample_count)
 
-    def learn_with_bootstrapping(self, sample_count=1000):
+    def learn_with_bootstrapping(self, sample_count=10000):
         """ Algorithm2 Sochman
         Outputs the strong classifier with the theta_a, theta_b of the weak classifiers updated
         """
-        s = self.training_stream.extract_training_patches(sample_count)
-
+        training_set_size = 500.
+        sample_pool = self.training_stream.extract_training_patches(sample_count)
         # initialize weights
         weighted_patches = {}
-        for patch in s:
-            weighted_patches[patch] = 1. / len(s)
+        for patch in sample_pool:                              # weight all patches
+            weighted_patches[patch] = 1. / len(sample_pool)
+        training_data = weighted_patches[0:training_set_size]  # sample 'training_set_size' many samples
 
         for t in range(self.layers+1):
             # choose the weak classifier with the minimum error
-            h_t = self._fetch_best_weak_classifier(weighted_patches)
+            h_t = self._fetch_best_weak_classifier(training_data)
             self.classifiers.append(h_t)    # add it to the strong classifier
 
             neg, pos = self._estimate_ratio(weighted_patches, t)
             # find decision thresholds for the strong classifier
-            self._tune_thresholds(t, pos, neg)
+            self._tune_thresholds(pos, neg, t)
 
             # throw away training samples that fall in our thresholds
+            sample_pool = self._reweight_and_discard_irrelevant(sample_pool, t)
             
             # sample new training data
+            training_data = random_dict_sample(weighted_patches, training_set_size)
         return
+
+    def _reweight_and_discard_irrelevant(self, weighted_sample_pool, t):
+        """ Throws away training samples that fall in the predefined thresholds and re weights the patches
+        :param weighted_sample_pool: A set of training samples
+        :param t: layer number
+        :return: The filtered set of training samples
+        """
+        ret = {}
+        wc = self.classifiers[t]
+        theta_a = wc.theta_a
+        theta_b = wc.theta_b
+        for patch, w in weighted_sample_pool.iteritems():
+            response = h_t(patch, t)
+            if response < theta_a or response > theta_b:
+                continue
+            else:
+                r = wc.classify(patch)
+
+                label = patch.label
+                new_weight = w * np.exp(-label * r)
+
+                ret[patch] = new_weight
+        # normalize weights
+        for patch, w in ret.iteritems():
+            pass
+        return ret
 
     def _estimate_ratio(self, weighted_patches, t):
         """ Real Adaboost for feature selection, right ?
         :param weighted_patches:
+        :param t: layer number
         :return:
         """
         pos_responses = neg_responses = None
@@ -101,12 +132,14 @@ class StrongClassifier(object):
         pos_sum_of_gaussians = sum_of_gaussians(pos_responses, lin_space, h_pos)
         return neg_sum_of_gaussians, pos_sum_of_gaussians
 
-
-
-
-    def _tune_thresholds(self, layer, pos_gaussian, neg_gaussian):
-        """ Update the threshold of the classifier """
-        # find thresholds according to http://personal.ee.surrey.ac.uk/Personal/Z.Kalal/Publications/2007_MSc_thesis.pdf
+    def _tune_thresholds(self, pos_gaussian, neg_gaussian, t):
+        """ Update the threshold of the weak classifier using this algorithm:
+        http://personal.ee.surrey.ac.uk/Personal/Z.Kalal/Publications/2007_MSc_thesis.pdf
+        :param pos_gaussian: Sum of positive class gaussians
+        :param neg_gaussian: Sum of negative class gaussians
+        :param t: layer number
+        """
+        #
         # page 37, 38
         index = 0
         for theta_a_candidate in np.linspace(-1, 1, num=1000):
@@ -123,9 +156,8 @@ class StrongClassifier(object):
                 if r_b < self.B:
                     break
             index += 1
-        self.classifiers[layer].theta_a = theta_a_candidate
-        self.classifiers[layer].theta_b = theta_b_candidate
-
+        self.classifiers[t].theta_a = theta_a_candidate
+        self.classifiers[t].theta_b = theta_b_candidate
 
     def _fetch_best_weak_classifier(self, weighted_patches):
         """ Returns the weak classifier that produces the least error
@@ -167,34 +199,6 @@ class StrongClassifier(object):
             return +1
         else:
             return -1
-
-    def get_r(self, patches, t):
-        """
-
-        :param patches:
-        :param t:
-        :return:
-        """
-        for t in range(0, self.layers):
-            pass
-
-        return self.error
-
-    def train(self, frame_count):
-        frames_processed = 0
-
-        while frames_processed < frame_count:
-            training = self.training_stream.get_random_patches(10)
-            for patch in training:
-                self.train_on_patch(patch)
-            frames_processed += 1
-
-        self.training_stream.getT()
-        return None
-
-    def train_on_patch(self, patch):
-        l = patch.label
-        pass
 
     def get_id(self):
         """
