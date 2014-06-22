@@ -20,7 +20,7 @@ class StrongClassifier(object):
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
             self.all_classifiers.append(wc)
-        self.all_classifiers = self.all_classifiers[-10:len(self.all_classifiers)]  # TODO remove this, testing
+        self.all_classifiers = self.all_classifiers[-100:len(self.all_classifiers)]  # TODO remove this, testing
         print "Initialized %d weak classifiers." % (len(self.all_classifiers))
 
         # # Phase2: Compute the classifier response for all the training patches
@@ -45,7 +45,7 @@ class StrongClassifier(object):
         """ Algorithm2 Sochman
         Outputs the strong classifier with the theta_a, theta_b of the weak classifiers updated
         """
-        training_set_size = 50  # TODO: change to 1000, 500 or something
+        training_set_size = 90  # TODO: change to 1000, 500 or something
         sample_pool = self.training_stream.extract_training_patches(sample_count)
         # initialize weights
         weighted_patches = []
@@ -101,10 +101,11 @@ class StrongClassifier(object):
         :param weighted_sample_pool: Weighted training set, subsample of the sample pool
         :return: Ratio
         """
-        correct = incorrect = 0
+        correct = 0
+        incorrect = 0
         for patch, w in weighted_sample_pool:    # fetch response for patch
             true_label = patch.label
-            ret_label = self.classify(patch)
+            ret_label = self._classify(patch)
             if true_label == ret_label:
                 correct += w
             else:
@@ -121,7 +122,8 @@ class StrongClassifier(object):
         # split weighted_patches into j bins
         bin_count = 10
 
-        pos_weighted_patches = neg_weighted_patches = []
+        pos_weighted_patches = []
+        neg_weighted_patches = []
         for patch, w in weighted_patches:  # TODO speedup
             if patch.label == +1:
                 pos_weighted_patches.append([patch, w])
@@ -130,19 +132,21 @@ class StrongClassifier(object):
         pos_bins = binning(pos_weighted_patches, bin_count)
         neg_bins = binning(neg_weighted_patches, bin_count)
 
-        pos_ratios = neg_ratios = []
+        pos_ratios = []
+        neg_ratios = []
         for i in range(bin_count):
             if i < len(pos_bins):
                 pos_ratios.append(self.classify_batch(pos_bins[i]))
             if i < len(neg_bins):
                 neg_ratios.append(self.classify_batch(neg_bins[i]))
         if pos_ratios:
-            plt.hist(pos_ratios, bins=50, alpha=.5, color='blue')
+            plt.hist(pos_ratios, bins=bin_count, alpha=.5, color='blue')
         if neg_ratios:
-            plt.hist(neg_ratios, bins=50, alpha=.5, color='red')
+            plt.hist(neg_ratios, bins=bin_count, alpha=.5, color='red')
         plt.show()
 
-        pos_responses = neg_responses = None
+        pos_responses = None
+        neg_responses = None
         for p, w in weighted_patches:
             response = self.h_t(p, t)
             true_label = p.label
@@ -197,7 +201,7 @@ class StrongClassifier(object):
         self.classifiers[t].theta_b = theta_b_candidate
 
     def _fetch_best_weak_classifier(self, weighted_patches):
-        """ Returns the weak classifier that produces the least error
+        """ Returns the weak classifier that produces the least error for a given training set
         :param weighted_patches: Weighted training set
         :return: The best classifier
         """
@@ -221,13 +225,15 @@ class StrongClassifier(object):
             ret += wc.classify(x)
         return ret
 
+    def _classify(self, patch):
+        wc = self.classifiers[len(self.classifiers)-1]
+        return wc.classify(patch)
+
     def classify(self, patch):
         """ Implementation of Algorithm 1 Sochman.
         :param patch: Patch to be classified
         :return: +1, -1
         """
-        if len(self.classifiers) == 1:
-            return self.classifiers[0].classify(patch)
         for t in range(0, len(self.classifiers)):
             h_ = self.h_t(patch, t)
             wc = self.classifiers[t]

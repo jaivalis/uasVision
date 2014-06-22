@@ -12,15 +12,8 @@ class Patch(object):
         self.ymax = ymax
         self.xmax = xmax
         self.label = label
-        self.haar = None
 
         assert(not np.array_equal(np.ndarray([]), self.crop))
-
-    def update_haar_features(self, haar):  # TODO safe delete
-        self.haar = haar
-
-    # def extractHOGFeatures(self):  # TODO safe delete
-    #     pass
 
     def overlap(self, other):
         # p1_self = (self.xmin, self.ymin)
