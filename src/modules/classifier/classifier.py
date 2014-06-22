@@ -49,14 +49,20 @@ class StrongClassifier(object):
         sample_pool = self.training_stream.extract_training_patches(sample_count)
         # initialize weights
         weighted_patches = []
-        for patch in sample_pool:                              # weight all patches
+        for patch in sample_pool:                              # weight all patches: training pool P
             weighted_patches.append([patch, 1. / len(sample_pool)])
+
+        # shuffle training pool
+        weighted_patches = random_sample(weighted_patches, len(weighted_patches))
+
         training_data = random_sample(weighted_patches, training_set_size)  # sample 'training_set_size' many samples
 
         for t in range(self.layers+1):
             # choose the weak classifier with the minimum error
             h_t = self._fetch_best_weak_classifier(training_data)
             self.classifiers.append(h_t)    # add it to the strong classifier
+
+            print self
 
             neg, pos = self._estimate_ratios(weighted_patches, t)
             # find decision thresholds for the strong classifier
@@ -84,7 +90,6 @@ class StrongClassifier(object):
             response = self.h_t(patch, t)
             if response < theta_a or response > theta_b:  # throw it away
                 continue
-
             r = wc.classify(patch)
             label = patch.label
             new_weight = w * np.exp(-label * r)
@@ -101,8 +106,8 @@ class StrongClassifier(object):
         :param weighted_sample_pool: Weighted training set, subsample of the sample pool
         :return: Ratio
         """
-        correct = 0
-        incorrect = 0
+        correct = 0.
+        incorrect = 0.
         for patch, w in weighted_sample_pool:    # fetch response for patch
             true_label = patch.label
             ret_label = self._classify(patch)
@@ -111,6 +116,8 @@ class StrongClassifier(object):
             else:
                 incorrect += w
         epsilon = 1. / (2. * len(weighted_sample_pool))
+        ret = .5 * np.log((correct + epsilon) / (incorrect + epsilon))
+        # print "correct classifications: %f, incorrect classifications: %f, ret: %f" % (correct, incorrect, ret)
         return .5 * np.log((correct + epsilon) / (incorrect + epsilon))
 
     def _estimate_ratios(self, weighted_patches, t):
@@ -251,3 +258,12 @@ class StrongClassifier(object):
         :return: A unique identifier
         """
         return ""
+
+    def __str__(self):
+        ret = ""
+        cl = 1
+        ret += "{\n"
+        for wc in self.classifiers:
+            ret += "\tWeak classifier #" + str(cl) + " - " + str(wc) + "\n"
+            cl += 1
+        return ret + "}"

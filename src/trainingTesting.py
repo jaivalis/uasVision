@@ -17,7 +17,7 @@ if __name__ == '__main__':
     gamma = .8
 
     # get_pickles()
-    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, layers=20, sample_count=5000)
+    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, layers=20, sample_count=500)
 
     # for p in patches:
     #     # if p.label == -1:

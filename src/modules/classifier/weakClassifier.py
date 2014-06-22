@@ -34,7 +34,7 @@ class WeakClassifier(object):
             # cor = sum(pos[pos[:, 0] > self.threshold][:, 2])
             # inc = sum(pos[pos[:, 0] < self.threshold][:, 2])
             # return .5 * np.log((cor + epsilon) / (inc + epsilon))
-            return +self.dominant_left
+            return -self.dominant_left
 
     def store_response(self, patch):
         """ For a given patch saves the response in self.responses
@@ -130,5 +130,5 @@ class WeakClassifier(object):
 
     def __str__(self):
         ret = "Feature: {" + str(self.feature) + "}"
-        # ret += " error:" + str(self.error) + " theta_B:"
+        ret += " threshold:" + str(self.threshold) + " dominant_left:" + str(self.dominant_left)
         return ret

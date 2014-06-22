@@ -45,5 +45,9 @@ class Patch(object):
         ret += ' ymin: ' + str(self.ymin)
         ret += ' xmax: ' + str(self.xmax)
         ret += ' ymax: ' + str(self.ymax)
-        ret += ' label: ' + str(self.label)
+        ret += ' label: '
+        if self.label == +1:
+            ret += '+'
+        else:
+            ret += '-'
         return ret
