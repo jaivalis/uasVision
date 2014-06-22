@@ -1,5 +1,6 @@
 import numpy as np
 from modules.util.math_f import pdf_gaussian, plot_gaussians
+from sys import maxint
 
 
 class WeakClassifier(object):
@@ -12,30 +13,28 @@ class WeakClassifier(object):
         # The sign of the dominant class left of the threshold
         self.dominant_left = None
 
-    def classify_batch(self, X):  # TODO
-        """ Classifies a sample of
-        :param X:
-        :return:
-        """
-        pass
+        self.theta_a = -maxint
+        self.theta_b = maxint
 
     def classify(self, patch):
-        """ Returns
+        """ Implementation of the decision stump
         :return:
         """
         response = self.feature.apply(patch.crop)
         if response < self.threshold:
-            epsilon = 1. / 2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold])
-            pos = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
-            cor = sum(pos[pos[:, 0] < self.threshold][:, 2])
-            inc = sum(pos[pos[:, 0] > self.threshold][:, 2])
-            return .5 * np.log((cor + epsilon)/(inc + epsilon))
+            # epsilon = 1. / 2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold])
+            # pos = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
+            # cor = sum(pos[pos[:, 0] < self.threshold][:, 2])
+            # inc = sum(pos[pos[:, 0] > self.threshold][:, 2])
+            # return .5 * np.log((cor + epsilon)/(inc + epsilon))
+            return self.dominant_left
         else:
-            epsilon = 1. / 2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold])
-            pos = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
-            cor = sum(pos[pos[:, 0] > self.threshold][:, 2])
-            inc = sum(pos[pos[:, 0] < self.threshold][:, 2])
-            return .5 * np.log((cor + epsilon) / (inc + epsilon))
+            # epsilon = 1. / 2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold])
+            # pos = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
+            # cor = sum(pos[pos[:, 0] > self.threshold][:, 2])
+            # inc = sum(pos[pos[:, 0] < self.threshold][:, 2])
+            # return .5 * np.log((cor + epsilon) / (inc + epsilon))
+            return +self.dominant_left
 
     def store_response(self, patch):
         """ For a given patch saves the response in self.responses

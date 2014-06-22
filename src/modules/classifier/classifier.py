@@ -14,8 +14,6 @@ class StrongClassifier(object):
         self.all_classifiers = []  # len(classifiers) = T
 
         self.classifiers = []
-        self.theta_a = None
-        self.theta_b = None
 
         #########    Parzen window technique    #########
         # Phase1:  Create all possible weak classifiers #
@@ -60,7 +58,7 @@ class StrongClassifier(object):
             h_t = self._fetch_best_weak_classifier(training_data)
             self.classifiers.append(h_t)    # add it to the strong classifier
 
-            neg, pos = self._estimate_ratio(weighted_patches, t)
+            neg, pos = self._estimate_ratios(weighted_patches, t)
             # find decision thresholds for the strong classifier
             self._tune_thresholds(pos, neg, t)
 
@@ -71,7 +69,7 @@ class StrongClassifier(object):
             training_data = random_sample(weighted_patches, training_set_size)
 
     def _reweight_and_discard_irrelevant(self, weighted_sample_pool, t):
-        """ Throws away training samples that fall in the predefined thresholds and reweights the patches
+        """ Throws away training samples that fall in the predefined thresholds and reweighs the patches
         :param weighted_sample_pool: A set of training samples
         :param t: layer number
         :return: The filtered set of training samples
@@ -96,12 +94,37 @@ class StrongClassifier(object):
             pass
         return ret
 
-    def _estimate_ratio(self, weighted_patches, t):
+    def classify_batch(self, weighted_sample_pool):
+        """ Classifies a sample of weighted samples drawn from the sample pool
+        :param weighted_sample_pool: Weighted training set, subsample of the sample pool
+        :return: Ratio
+        """
+        correct = incorrect = 0
+        for patch, w in weighted_sample_pool:    # fetch response for patch
+            true_label = patch.label
+            ret_label = self.classify(patch)
+            if true_label == ret_label:
+                correct += w
+            else:
+                incorrect += w
+        epsilon = 1. / (2. * len(weighted_sample_pool))
+        return .5 * np.log((correct + epsilon) / (incorrect + epsilon))
+
+    def _estimate_ratios(self, weighted_patches, t):
         """ Real Adaboost for feature selection, right ?
         :param weighted_patches:
         :param t: layer number
         :return:
         """
+        ret = []
+        # split weighted_patches into j bins
+        bin_count = 10
+        bins = binning(weighted_patches, bin_count)
+
+        for bin in bins:
+            r = self.classify_batch(bin)
+            ret.append(r)
+
         pos_responses = neg_responses = None
         for p, w in weighted_patches:
             response = self.h_t(p, t)
@@ -176,7 +199,8 @@ class StrongClassifier(object):
         :return: H_t(x)
         """
         ret = 0
-        for wc in self.classifiers[0:t+1]:
+        strong_classifier = self.classifiers[0:t+1]
+        for wc in strong_classifier:
             ret += wc.classify(x)
         return ret
 
@@ -185,21 +209,20 @@ class StrongClassifier(object):
         :param patch: Patch to be classified
         :return: +1, -1
         """
-        for t in range(0, self.layers):
-            h_t = h_t(t, patch)
+        for t in range(0, len(self.classifiers)):
+            h_ = self.h_t(patch, t)
             wc = self.classifiers[t]
-            if h_t >= wc.theta_b:
+            if h_ >= wc.theta_b:
                 return +1
-            if h_t <= wc.theta_a:
+            if h_ <= wc.theta_a:
                 return -1
-        if self.h_t(self.layers, patch) > self.gamma:
+        if self.h_t(patch, self.layers) > self.gamma:
             return +1
         else:
             return -1
 
     def get_id(self):
-        """
-        Used by cPickle to serialize/de-serialize
+        """ Used by cPickle to serialize/de-serialize
         :return: A unique identifier
         """
         return ""
