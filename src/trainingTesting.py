@@ -13,7 +13,7 @@ if __name__ == '__main__':
     hh = HaarHolder((24, 24))
 
     alpha = .9
-    beta = 0
+    beta = 0.1
     gamma = .8
 
     # get_pickles()

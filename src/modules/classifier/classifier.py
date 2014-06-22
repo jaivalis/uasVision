@@ -1,6 +1,7 @@
 from modules.classifier.weakClassifier import WeakClassifier
 from modules.util.math_f import *
 from modules.util.datastructures_f import *
+import copy
 
 
 class StrongClassifier(object):
@@ -60,7 +61,7 @@ class StrongClassifier(object):
         for t in range(self.layers+1):
             # choose the weak classifier with the minimum error
             h_t = self._fetch_best_weak_classifier(training_data)
-            self.classifiers.append(h_t)    # add it to the strong classifier
+            self.classifiers.append(copy.deepcopy(h_t))    # add it to the strong classifier
 
             print self
 
@@ -70,7 +71,7 @@ class StrongClassifier(object):
 
             # throw away training samples that fall in our thresholds
             weighted_patches = self._reweight_and_discard_irrelevant(weighted_patches, t)
-            
+
             # sample new training data
             training_data = random_sample(weighted_patches, training_set_size)
 
@@ -80,22 +81,24 @@ class StrongClassifier(object):
         :param t: layer number
         :return: The filtered set of training samples
         """
-        tmp = ret = []
+        tmp = []
+        ret = []
         wc = self.classifiers[t]
         theta_a = wc.theta_a
         theta_b = wc.theta_b
 
         norm_factor = 0
+
         for patch, w in weighted_sample_pool:
-            response = self.h_t(patch, t)
-            if response < theta_a or response > theta_b:  # throw it away
-                continue
+            #response = self.h_t(patch, t)
+            #if response < theta_a or response > theta_b:  # throw it away
+            #    continue
             r = wc.classify(patch)
             label = patch.label
             new_weight = w * np.exp(-label * r)
 
             tmp.append([patch, new_weight])
-            norm_factor = max(norm_factor, new_weight)
+            norm_factor += new_weight
         for patch, w in tmp:  # normalize weights
             normalized_weight = w / norm_factor
             ret.append([patch, normalized_weight])
@@ -127,7 +130,7 @@ class StrongClassifier(object):
         :return:
         """
         # split weighted_patches into j bins
-        bin_count = 10
+        bin_count = 3
 
         pos_weighted_patches = []
         neg_weighted_patches = []
@@ -152,34 +155,16 @@ class StrongClassifier(object):
             plt.hist(neg_ratios, bins=bin_count, alpha=.5, color='red')
         plt.show()
 
-        pos_responses = None
-        neg_responses = None
-        for p, w in weighted_patches:
-            response = self.h_t(p, t)
-            true_label = p.label
-            # append to the responses
-            if p.label == +1:
-                if pos_responses is None:
-                    pos_responses = np.array([response, true_label, w])
-                else:
-                    pos_responses = np.vstack((pos_responses, [response, true_label, w]))
-            elif p.label == -1:
-                if neg_responses is None:
-                    neg_responses = np.array([response, true_label, w])
-                else:
-                    neg_responses = np.vstack((neg_responses, [response, true_label, w]))
         # Compute Cumulative conditional probabilities of classes
-        #plot_histograms(pos_responses, neg_responses)
-        data = np.append(pos_responses, neg_responses, axis=0)
-        plot_gaussians(data, 0.5, 0.5)
         # compute gaussians for negative and positive classes
-        sigma_neg = np.std(neg_responses)
-        sigma_pos = np.std(pos_responses)
-        h_neg = 1.144 * sigma_neg * len(neg_responses) ** -0.2
-        h_pos = 1.144 * sigma_pos * len(pos_responses) ** -0.2
+        sigma_neg = np.std(neg_ratios)
+        sigma_pos = np.std(pos_ratios)
+        h_neg = 1.144 * sigma_neg * len(neg_ratios) ** -0.2
+        h_pos = 1.144 * sigma_pos * len(pos_ratios) ** -0.2
         lin_space = np.linspace(-1, 1, num=1000)
-        neg_sum_of_gaussians = sum_of_gaussians(neg_responses, lin_space, h_neg)
-        pos_sum_of_gaussians = sum_of_gaussians(pos_responses, lin_space, h_pos)
+        neg_sum_of_gaussians = sum_of_gaussians(neg_ratios, lin_space, h_neg)
+        pos_sum_of_gaussians = sum_of_gaussians(pos_ratios, lin_space, h_pos)
+        plot_gaussians(neg_ratios, pos_ratios, sigma_neg, sigma_pos, h_neg, h_pos)
         return neg_sum_of_gaussians, pos_sum_of_gaussians
 
     def _tune_thresholds(self, pos_gaussian, neg_gaussian, t):
@@ -194,6 +179,7 @@ class StrongClassifier(object):
             if neg_gaussian[index] < theta_a_candidate and pos_gaussian[index] < theta_a_candidate:
                 r_a = neg_gaussian[index] / pos_gaussian[index]
                 if r_a > self.A:
+                    self.classifiers[t].theta_a = theta_a_candidate
                     break
             index += 1
         lin_space = np.linspace(1, -1, num=1000)  # from right to left
@@ -202,10 +188,9 @@ class StrongClassifier(object):
             if neg_gaussian[index] > theta_b_candidate and pos_gaussian[index] > theta_b_candidate:
                 r_b = neg_gaussian[index] / pos_gaussian[index]
                 if r_b < self.B:
+                    self.classifiers[t].theta_b = theta_b_candidate
                     break
             index += 1
-        self.classifiers[t].theta_a = theta_a_candidate
-        self.classifiers[t].theta_b = theta_b_candidate
 
     def _fetch_best_weak_classifier(self, weighted_patches):
         """ Returns the weak classifier that produces the least error for a given training set
