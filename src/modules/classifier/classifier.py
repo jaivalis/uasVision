@@ -74,24 +74,26 @@ class StrongClassifier(object):
         :param t: layer number
         :return: The filtered set of training samples
         """
-        ret = []
+        tmp = ret = []
         wc = self.classifiers[t]
         theta_a = wc.theta_a
         theta_b = wc.theta_b
+
+        norm_factor = 0
         for patch, w in weighted_sample_pool:
             response = self.h_t(patch, t)
-            if response < theta_a or response > theta_b:
+            if response < theta_a or response > theta_b:  # throw it away
                 continue
-            else:
-                r = wc.classify(patch)
 
-                label = patch.label
-                new_weight = w * np.exp(-label * r)
+            r = wc.classify(patch)
+            label = patch.label
+            new_weight = w * np.exp(-label * r)
 
-                ret.append([patch, new_weight])
-        # normalize weights
-        for patch, w in ret:
-            pass
+            tmp.append([patch, new_weight])
+            norm_factor = max(norm_factor, new_weight)
+        for patch, w in tmp:  # normalize weights
+            normalized_weight = w / norm_factor
+            ret.append([patch, normalized_weight])
         return ret
 
     def classify_batch(self, weighted_sample_pool):
@@ -116,14 +118,29 @@ class StrongClassifier(object):
         :param t: layer number
         :return:
         """
-        ret = []
         # split weighted_patches into j bins
         bin_count = 10
-        bins = binning(weighted_patches, bin_count)
 
-        for bin in bins:
-            r = self.classify_batch(bin)
-            ret.append(r)
+        pos_weighted_patches = neg_weighted_patches = []
+        for patch, w in weighted_patches:  # TODO speedup
+            if patch.label == +1:
+                pos_weighted_patches.append([patch, w])
+            elif patch.label == -1:
+                neg_weighted_patches.append([patch, w])
+        pos_bins = binning(pos_weighted_patches, bin_count)
+        neg_bins = binning(neg_weighted_patches, bin_count)
+
+        pos_ratios = neg_ratios = []
+        for i in range(bin_count):
+            if i < len(pos_bins):
+                pos_ratios.append(self.classify_batch(pos_bins[i]))
+            if i < len(neg_bins):
+                neg_ratios.append(self.classify_batch(neg_bins[i]))
+        if pos_ratios:
+            plt.hist(pos_ratios, bins=50, alpha=.5, color='blue')
+        if neg_ratios:
+            plt.hist(neg_ratios, bins=50, alpha=.5, color='red')
+        plt.show()
 
         pos_responses = neg_responses = None
         for p, w in weighted_patches:
@@ -209,6 +226,8 @@ class StrongClassifier(object):
         :param patch: Patch to be classified
         :return: +1, -1
         """
+        if len(self.classifiers) == 1:
+            return self.classifiers[0].classify(patch)
         for t in range(0, len(self.classifiers)):
             h_ = self.h_t(patch, t)
             wc = self.classifiers[t]

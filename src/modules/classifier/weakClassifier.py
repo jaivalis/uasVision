@@ -48,9 +48,9 @@ class WeakClassifier(object):
             self.annotated_responses = np.vstack((self.annotated_responses, [response, label]))
 
     def train(self, weighted_patches):
-        """
-        Given a training set T, finds the threshold that produces the lowest error and updates the error value of
+        """ Given a training set T, finds the threshold that produces the lowest error and updates the error value of
         the classifier.
+        :param weighted_patches: Weighted training set
         """
         for p, w in weighted_patches:
             response = self.feature.apply(p.crop)
@@ -111,9 +111,6 @@ class WeakClassifier(object):
             if err < self.error:
                 self.error = err
                 self.threshold = thr
-
-    def get_error(self):
-        return self.error
 
     def plot_gaussian(self):
         """ Plots the mixture of Gaussians split into two classes (+, -) """

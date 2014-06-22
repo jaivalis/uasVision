@@ -7,7 +7,7 @@ def random_sample(arr, sample_count):
     :param sample_count: Size of returned dictionary
     :return: a random subsample of d of size 'sample_count'
     """
-    assert sample_count < len(arr)
+    sample_count = min(sample_count, len(arr))
     ret = []
     indexes = range(len(arr))
     indexes = indexes[0: sample_count]
