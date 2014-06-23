@@ -90,9 +90,9 @@ class StrongClassifier(object):
         norm_factor = 0
 
         for patch, w in weighted_sample_pool:
-            #response = self.h_t(patch, t)
-            #if response < theta_a or response > theta_b:  # throw it away
-            #    continue
+            response = self.h_t(patch, t)
+            if response < theta_a or response > theta_b:  # throw it away
+                continue
             r = wc.classify(patch)
             label = patch.label
             new_weight = w * np.exp(-label * r)
@@ -129,42 +129,28 @@ class StrongClassifier(object):
         :param t: layer number
         :return:
         """
-        # split weighted_patches into j bins
-        bin_count = 3
 
         pos_weighted_patches = []
+        pos = []
         neg_weighted_patches = []
+        neg = []
         for patch, w in weighted_patches:  # TODO speedup
             if patch.label == +1:
                 pos_weighted_patches.append([patch, w])
+                pos.append(self.h_t(patch, t))
             elif patch.label == -1:
                 neg_weighted_patches.append([patch, w])
-        pos_bins = binning(pos_weighted_patches, bin_count)
-        neg_bins = binning(neg_weighted_patches, bin_count)
-
-        pos_ratios = []
-        neg_ratios = []
-        for i in range(bin_count):
-            if i < len(pos_bins):
-                pos_ratios.append(self.classify_batch(pos_bins[i]))
-            if i < len(neg_bins):
-                neg_ratios.append(self.classify_batch(neg_bins[i]))
-        if pos_ratios:
-            plt.hist(pos_ratios, bins=bin_count, alpha=.5, color='blue')
-        if neg_ratios:
-            plt.hist(neg_ratios, bins=bin_count, alpha=.5, color='red')
-        plt.show()
+                neg.append(self.h_t(patch, t))
 
         # Compute Cumulative conditional probabilities of classes
         # compute gaussians for negative and positive classes
-        sigma_neg = np.std(neg_ratios)
-        sigma_pos = np.std(pos_ratios)
-        h_neg = 1.144 * sigma_neg * len(neg_ratios) ** -0.2
-        h_pos = 1.144 * sigma_pos * len(pos_ratios) ** -0.2
+        all_patches = np.append(pos, neg)
+        sigma = np.std(all_patches)
+        h = 1.144 * sigma * len(all_patches) ** -0.2
         lin_space = np.linspace(-1, 1, num=1000)
-        neg_sum_of_gaussians = sum_of_gaussians(neg_ratios, lin_space, h_neg)
-        pos_sum_of_gaussians = sum_of_gaussians(pos_ratios, lin_space, h_pos)
-        plot_gaussians(neg_ratios, pos_ratios, sigma_neg, sigma_pos, h_neg, h_pos)
+        neg_sum_of_gaussians = sum_of_gaussians(neg, lin_space, h)
+        pos_sum_of_gaussians = sum_of_gaussians(pos, lin_space, h)
+        plot_gaussians(neg, pos, sigma, h)
         return neg_sum_of_gaussians, pos_sum_of_gaussians
 
     def _tune_thresholds(self, pos_gaussian, neg_gaussian, t):

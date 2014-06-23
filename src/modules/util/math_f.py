@@ -48,7 +48,7 @@ def sum_of_gaussians(data, lin_space, h):
     return ret
 
 
-def plot_gaussians(neg_ratios, pos_ratios, sigma_neg, sigma_pos, h_neg, h_pos):
+def plot_gaussians(neg_ratios, pos_ratios, sigma, h):
     """
     :param data: As acquired from classifier, annotated
     :param sigma: Standard deviation
@@ -65,8 +65,8 @@ def plot_gaussians(neg_ratios, pos_ratios, sigma_neg, sigma_pos, h_neg, h_pos):
     first = True
     for xx in positives:
         x = xx
-        kernel_xs = np.linspace(x - 2*sigma_pos, x + 2*sigma_pos)
-        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma_pos)) * 0.4  # scaling just so it looks better
+        kernel_xs = np.linspace(x - 2*sigma, x + 2*sigma)
+        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma)) * 0.4  # scaling just so it looks better
         if first:
             ax[0].plot(kernel_xs, kernel_ys, 'b--', linewidth=1, label=' positive Kernels')
             first = False
@@ -75,8 +75,8 @@ def plot_gaussians(neg_ratios, pos_ratios, sigma_neg, sigma_pos, h_neg, h_pos):
     first = True
     for xx in negatives:
         x = xx
-        kernel_xs = np.linspace(x - 2*sigma_neg, x + 2*sigma_neg)
-        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma_neg)) * 0.4  # scaling just so it looks better
+        kernel_xs = np.linspace(x - 2*sigma, x + 2*sigma)
+        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma)) * 0.4  # scaling just so it looks better
         if first:
             ax[1].plot(kernel_xs, kernel_ys, 'r--', linewidth=1, label=' negative Kernels')
             first = False
@@ -90,8 +90,8 @@ def plot_gaussians(neg_ratios, pos_ratios, sigma_neg, sigma_pos, h_neg, h_pos):
     max_pos = max(positives) + margin
     xs_n = np.linspace(min_neg, max_neg, 100)
     xs_p = np.linspace(min_pos, max_pos, 100)
-    kde_n = sum_of_gaussians(negatives, xs_n, h_neg)
-    kde_p = sum_of_gaussians(positives, xs_p, h_pos)
+    kde_n = sum_of_gaussians(negatives, xs_n, h)
+    kde_p = sum_of_gaussians(positives, xs_p, h)
 
     # plot Kernel density estimation
     ax[0].plot(xs_p, kde_p, linewidth=3, color='blue', label='positive KDE')
