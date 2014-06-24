@@ -125,4 +125,5 @@ class WeakClassifier(object):
     def __str__(self):
         ret = "Feature: {" + str(self.feature) + "}"
         ret += " threshold:" + str(self.threshold) + " dominant_left:" + str(self.dominant_left)
+        ret += " error:" + str(self.error)
         return ret

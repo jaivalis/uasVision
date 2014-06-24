@@ -5,7 +5,7 @@ import copy
 
 
 class StrongClassifier(object):
-    def __init__(self, training_stream, feature_holder, alpha, beta, gamma, layers=10, sample_count=1000):
+    def __init__(self, training_stream, feature_holder, alpha, beta, gamma, layers=10, sample_count=1000, algorithm='wald'):
         self.training_stream = training_stream
         self.feature_holder = feature_holder
         self.A = (1. - beta) / alpha
@@ -13,6 +13,7 @@ class StrongClassifier(object):
         self.gamma = gamma
         self.layers = layers
         self.all_classifiers = []  # len(classifiers) = T
+        self.algorithm = algorithm
 
         self.classifiers = []
 
@@ -41,24 +42,29 @@ class StrongClassifier(object):
         # shuffle training pool
         weighted_patches = random_sample(weighted_patches, len(weighted_patches))
 
-        training_data = random_sample(weighted_patches, training_set_size)  # sample 'training_set_size' many samples
+        if self.wald:
+            training_data = random_sample(weighted_patches, training_set_size)  # sample 'training_set_size' many samples
 
         for t in range(self.layers+1):
             # choose the weak classifier with the minimum error
-            h_t = self._fetch_best_weak_classifier(training_data)
+            if self.algorithm == 'wald':
+                h_t = self._fetch_best_weak_classifier(training_data)
+            else:
+                h_t = self._fetch_best_weak_classifier(weighted_patches)
             self.classifiers.append(copy.deepcopy(h_t))    # add it to the strong classifier
 
             print self
-
-            neg, pos = self._estimate_ratios(training_data, t)
-            # find decision thresholds for the strong classifier
-            self._tune_thresholds(pos, neg, t)
-
-            # throw away training samples that fall in our thresholds
-            weighted_patches = self._reweight_and_discard_irrelevant(weighted_patches, t)
-
-            # sample new training data
-            training_data = random_sample(weighted_patches, training_set_size)
+            if self.algorithm == 'wald':
+                neg, pos = self._estimate_ratios(training_data, t)
+                # find decision thresholds for the strong classifier
+                self._tune_thresholds(pos, neg, t)
+                # throw away training samples that fall in our thresholds
+                weighted_patches = self._reweight_and_discard_irrelevant(weighted_patches, t)
+                # sample new training data
+                training_data = random_sample(weighted_patches, training_set_size)
+            else:
+                self.compute_alpha()
+                weighted_patches = self.reweight(weighted_patches, t)
 
     def _reweight_and_discard_irrelevant(self, weighted_sample_pool, t):
         """ Throws away training samples that fall in the predefined thresholds and reweighs the patches
