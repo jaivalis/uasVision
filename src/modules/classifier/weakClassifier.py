@@ -26,15 +26,13 @@ class WeakClassifier(object):
             pos = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
             cor = sum(pos[pos[:, 0] < self.threshold][:, 2])
             inc = sum(pos[pos[:, 0] > self.threshold][:, 2])
-            return .5 * np.log((cor + epsilon)/(inc + epsilon))
-            #return self.dominant_left
+            return self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
         else:
             epsilon = 1. / 2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold])
             pos = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
             cor = sum(pos[pos[:, 0] > self.threshold][:, 2])
             inc = sum(pos[pos[:, 0] < self.threshold][:, 2])
-            return .5 * np.log((cor + epsilon) / (inc + epsilon))
-            #return -self.dominant_left
+            return - self.dominant_left * .5 * np.log((cor + epsilon) / (inc + epsilon))
 
     def store_response(self, patch):
         """ For a given patch saves the response in self.responses
