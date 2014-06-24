@@ -5,7 +5,7 @@ import copy
 
 
 class StrongClassifier(object):
-    def __init__(self, training_stream, feature_holder, alpha, beta, gamma, layers=10, sample_count=20):
+    def __init__(self, training_stream, feature_holder, alpha, beta, gamma, layers=10, sample_count=1000):
         self.training_stream = training_stream
         self.feature_holder = feature_holder
         self.A = (1. - beta) / alpha
@@ -21,7 +21,7 @@ class StrongClassifier(object):
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
             self.all_classifiers.append(wc)
-        self.all_classifiers = self.all_classifiers[-1000:len(self.all_classifiers)]  # TODO remove this, testing
+        self.all_classifiers = self.all_classifiers[-2000:len(self.all_classifiers)]  # TODO remove this, testing
         print "Initialized %d weak classifiers." % (len(self.all_classifiers))
 
         # Phase2: Algorithm2: Learning with bootstrapping
@@ -31,8 +31,8 @@ class StrongClassifier(object):
         """ Algorithm2 Sochman
         Outputs the strong classifier with the theta_a, theta_b of the weak classifiers updated
         """
-        training_set_size = 90  # TODO: change to 1000, 500 or something
-        sample_pool = self.training_stream.extract_training_patches(sample_count)
+        training_set_size = 150  # TODO: change to 1000, 500 or something
+        sample_pool = self.training_stream.extract_training_patches(sample_count, negative_ratio=1)
         # initialize weights
         weighted_patches = []
         for patch in sample_pool:                              # weight all patches: training pool P
@@ -90,7 +90,7 @@ class StrongClassifier(object):
         return ret
 
     def _estimate_ratios(self, weighted_patches, t):
-        """ Real Adaboost for feature selection, right ?
+        """
         :param weighted_patches:
         :param t: layer number
         :return:
@@ -160,7 +160,6 @@ class StrongClassifier(object):
             wc.train(weighted_patches)
             if wc.error < min_error:
                 ret = wc
-        # ret.plot_gaussian()
         return ret
 
     def h_t(self, x, t):
@@ -174,10 +173,6 @@ class StrongClassifier(object):
         for wc in strong_classifier:
             ret += wc.classify(x)
         return ret
-
-    def _classify(self, patch):
-        wc = self.classifiers[len(self.classifiers)-1]
-        return wc.classify(patch)
 
     def classify(self, patch):
         """ Implementation of Algorithm 1 Sochman.
@@ -196,12 +191,6 @@ class StrongClassifier(object):
         else:
             return -1
 
-    def get_id(self):
-        """ Used by cPickle to serialize/de-serialize
-        :return: A unique identifier
-        """
-        return ""
-
     def __str__(self):
         ret = ""
         cl = 1
@@ -210,3 +199,11 @@ class StrongClassifier(object):
             ret += "\tWeak classifier #" + str(cl) + " - " + str(wc) + "\n"
             cl += 1
         return ret + "}"
+
+    @staticmethod
+    def get_id():
+        """ Used by cPickle to serialize/de-serialize
+        :rtype : basestring
+        :return: A unique identifier
+        """
+        return ""

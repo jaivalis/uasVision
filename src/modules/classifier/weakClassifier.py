@@ -15,9 +15,9 @@ class WeakClassifier(object):
 
         self.theta_a = -maxint
         self.theta_b = maxint
-
-        self.error_left = None
-        self.error_right = None
+        # The errors that would be returned on either side of the decision stump
+        self.conf_left = None
+        self.conf_right = None
 
     def classify(self, patch):
         """ Implementation of the decision stump
@@ -25,9 +25,9 @@ class WeakClassifier(object):
         """
         response = self.feature.apply(patch.crop)
         if response < self.threshold:
-            return self.error_left
+            return self.conf_left
         else:
-            return self.error_right
+            return self.conf_right
 
     def train(self, weighted_patches):
         """ Given a training set T, finds the threshold that produces the lowest error and updates the error value of
@@ -93,22 +93,21 @@ class WeakClassifier(object):
             if err < self.error:
                 self.error = err
                 self.threshold = thr
-        self._cache_errors()
+        self._eval_errors()
 
-    def _cache_errors(self):
+    def _eval_errors(self):
         """ Updates the error metrics of the classifier in order to avoid calculating them every time """
         epsilon = 1. / (2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold]))
-        pos = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
-        cor = sum(pos[pos[:, 0] < self.threshold][:, 2])
-        inc = sum(pos[pos[:, 0] > self.threshold][:, 2])
-        self.error_left = self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
+        left = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
+        cor = sum(left[left[:, 0] < self.threshold][:, 2])
+        inc = sum(left[left[:, 0] > self.threshold][:, 2])
+        self.conf_left = self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
 
         epsilon = 1. / (2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold]))
-        pos = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
-        cor = sum(pos[pos[:, 0] > self.threshold][:, 2])
-        inc = sum(pos[pos[:, 0] < self.threshold][:, 2])
-        self.error_right = -self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
-
+        right = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
+        cor = sum(right[right[:, 0] > self.threshold][:, 2])
+        inc = sum(right[right[:, 0] < self.threshold][:, 2])
+        self.conf_right = -self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
 
     def plot_gaussian(self):
         """ Plots the mixture of Gaussians split into two classes (+, -) """

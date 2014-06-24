@@ -15,31 +15,30 @@ class TrainingStream(object):
         self.curr_image = None
         self.cursor = 0
 
-    def extract_training_patches(self, l, negative_count_per_frame=10):
+    def extract_training_patches(self, l, negative_ratio=1.):
         ret = []
         print 'Extracting', l, 'training samples...'
         while len(ret) < l+1:
-            tmp = self.get_random_patches(negative_count_per_frame)
+            tmp = self.get_random_patches(negative_ratio)
             ret.extend(tmp)
         print 'Done extracting training samples'
         return ret[0:l]
 
-    def get_random_patches(self, negative_count=10):
-        annos = self.annotation_stream.get_annotated_frame_ids()
-        rand = random.randint(0, len(annos)-1)
+    def get_random_patches(self, negative_ratio=1.):
+        frame_ids = self.annotation_stream.get_annotated_frame_ids()
+        rand = random.randint(0, len(frame_ids)-1)
 
-        frame_id = annos[rand]
+        frame_id = frame_ids[rand]
 
         annotations = self.annotation_stream.get_annotations(frame_id)
         img = self.input_stream.get_grayscale_img(frame_id)
 
         # self.imshow(frame_id)
-        assert len(annotations) > 0
-        return self._extract_patches(img, annotations, negative_count)
+        return self._extract_patches(img, annotations, negative_ratio)
 
-    def _extract_patches(self, img, annotations, negative_count):
+    def _extract_patches(self, img, annotations, negative_ratio):
         ret = self._extract_positive_patches(img, annotations)
-        neg = self._extract_negative_patches(img, ret, negative_count)
+        neg = self._extract_negative_patches(img, ret, len(ret) * negative_ratio)
         ret.extend(neg)
         return ret
 
