@@ -104,24 +104,6 @@ class StrongClassifier(object):
             ret.append([patch, normalized_weight])
         return ret
 
-    def classify_batch(self, weighted_sample_pool):
-        """ Classifies a sample of weighted samples drawn from the sample pool
-        :param weighted_sample_pool: Weighted training set, subsample of the sample pool
-        :return: Ratio
-        """
-        correct = 0.
-        incorrect = 0.
-        for patch, w in weighted_sample_pool:    # fetch response for patch
-            true_label = patch.label
-            ret_label = self._classify(patch)
-            if true_label == ret_label:
-                correct += w
-            else:
-                incorrect += w
-        epsilon = 1. / (2. * len(weighted_sample_pool))
-        ret = .5 * np.log((correct + epsilon) / (incorrect + epsilon))
-        # print "correct classifications: %f, incorrect classifications: %f, ret: %f" % (correct, incorrect, ret)
-        return .5 * np.log((correct + epsilon) / (incorrect + epsilon))
 
     def _estimate_ratios(self, weighted_patches, t):
         """ Real Adaboost for feature selection, right ?
@@ -161,22 +143,29 @@ class StrongClassifier(object):
         :param t: layer number
         """
         index = 0
+        threshold_found = 0
+        r_a_theta = []
         for theta_a_candidate in np.linspace(-1, 1, num=1000):
             if neg_gaussian[index] < theta_a_candidate and pos_gaussian[index] < theta_a_candidate:
                 r_a = neg_gaussian[index] / pos_gaussian[index]
-                if r_a > self.A:
+                r_a_theta.append([theta_a_candidate, r_a])
+                if r_a > self.A and threshold_found == 0:
                     self.classifiers[t].theta_a = theta_a_candidate
-                    break
+                    threshold_found = 1
             index += 1
         lin_space = np.linspace(1, -1, num=1000)  # from right to left
         index = 0
+        threshold_found = 0
+        r_b_theta = []
         for theta_b_candidate in lin_space:
             if neg_gaussian[index] > theta_b_candidate and pos_gaussian[index] > theta_b_candidate:
                 r_b = neg_gaussian[index] / pos_gaussian[index]
-                if r_b < self.B:
+                r_b_theta.append([theta_b_candidate, r_b])
+                if r_b < self.B and threshold_found == 0:
                     self.classifiers[t].theta_b = theta_b_candidate
-                    break
+                    threshold_found = 1
             index += 1
+        plot_ratios(r_b_theta, r_a_theta, self.classifiers[t].theta_b, self.classifiers[t].theta_a)
 
     def _fetch_best_weak_classifier(self, weighted_patches):
         """ Returns the weak classifier that produces the least error for a given training set

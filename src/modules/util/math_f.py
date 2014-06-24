@@ -99,3 +99,19 @@ def plot_gaussians(neg_ratios, pos_ratios, sigma, h):
     ax[0].legend()
     ax[1].legend()
     plt.show()
+
+
+def plot_ratios(neg, pos, theta_b, theta_a):
+    cand_neg = []
+    cand_pos = []
+    ratio_neg = []
+    ratio_pos = []
+    for cand, ratio in neg:
+        cand_neg = np.append(cand_neg, cand)
+        ratio_neg = np.append(ratio_neg, ratio)
+    for cand, ratio in pos:
+        cand_pos = np.append(cand_pos, cand)
+        ratio_pos = np.append(ratio_pos, ratio)
+    plt.plot(cand_pos, ratio_pos, linewidth=3, alpha=0.5, color='blue', label='pos. Threshold search')
+    plt.plot(cand_neg, ratio_neg, linewidth=3, alpha=0.5, color='red', label='neg. Threshold search')
+    plt.show()
