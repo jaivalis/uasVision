@@ -1,29 +1,27 @@
 import random
 
 
-def random_sample(arr, sample_count):
-    """ Returns a random subsample of arr of size 'sample_count'
-    :param arr: List to sample from
+def random_sample_weighted_patches(lst, sample_count):
+    """ Returns a random subsample of arr of size 'sample_count' containing 50% positive and 50% negative samples
+    :param lst: List containing [patch, weight]
     :param sample_count: Size of returned dictionary
     :return: a random subsample of d of size 'sample_count'
     """
-    sample_count = min(sample_count, len(arr))
+    sample_count = min(sample_count, len(lst))
     ret = []
-    indexes = range(len(arr))
-    indexes = indexes[0: sample_count]
+    indexes = range(len(lst))
     random.shuffle(indexes)
+    pos_count = 0
+    neg_count = 0
     for i in indexes:
-        ret.append(arr[i])
-    return ret
+        patch = lst[i][0]
+        if pos_count < 1 + sample_count / 2. and patch.label == +1:
+            pos_count += 1
+            ret.append(lst[i])
+        if neg_count < 1 + sample_count / 2. and patch.label == -1:
+            neg_count += 1
+            ret.append(lst[i])
 
-
-def binning(seq, bin_count):
-    avg = len(seq) / float(bin_count)
-    ret = []
-    last = 0.0
-
-    while last < len(seq):
-        ret.append(seq[int(last):int(last + avg)])
-        last += avg
-
+        if len(ret) == sample_count:
+            break
     return ret
