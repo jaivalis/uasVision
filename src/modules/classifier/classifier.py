@@ -21,25 +21,10 @@ class StrongClassifier(object):
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
             self.all_classifiers.append(wc)
-        self.all_classifiers = self.all_classifiers[-100:len(self.all_classifiers)]  # TODO remove this, testing
+        self.all_classifiers = self.all_classifiers[-1000:len(self.all_classifiers)]  # TODO remove this, testing
         print "Initialized %d weak classifiers." % (len(self.all_classifiers))
 
-        # # Phase2: Compute the classifier response for all the training patches
-        # samples = 0
-        # cll = 0
-        # for classifier in self.all_classifiers:
-        #     cll += 1
-        #     while True:
-        #         for patch in training_stream.get_random_patches():
-        #             samples += 1
-        #             classifier.store_response(patch)
-        #
-        #         if samples > sample_count + 1:
-        #             break
-        #     print "Done extracting feature #%d: " % cll + str(classifier)
-        #     classifier.plot_gaussian()
-
-        # Phase3: Algorithm2: Learning with bootstrapping
+        # Phase2: Algorithm2: Learning with bootstrapping
         self.learn_with_bootstrapping(sample_count)
 
     def learn_with_bootstrapping(self, sample_count=10000):
@@ -65,7 +50,7 @@ class StrongClassifier(object):
 
             print self
 
-            neg, pos = self._estimate_ratios(weighted_patches, t)
+            neg, pos = self._estimate_ratios(training_data, t)
             # find decision thresholds for the strong classifier
             self._tune_thresholds(pos, neg, t)
 
@@ -104,14 +89,12 @@ class StrongClassifier(object):
             ret.append([patch, normalized_weight])
         return ret
 
-
     def _estimate_ratios(self, weighted_patches, t):
         """ Real Adaboost for feature selection, right ?
         :param weighted_patches:
         :param t: layer number
         :return:
         """
-
         pos_weighted_patches = []
         pos = []
         neg_weighted_patches = []
@@ -120,9 +103,11 @@ class StrongClassifier(object):
             if patch.label == +1:
                 pos_weighted_patches.append([patch, w])
                 pos.append(self.h_t(patch, t))
+                print ''
             elif patch.label == -1:
                 neg_weighted_patches.append([patch, w])
                 neg.append(self.h_t(patch, t))
+                print ''
 
         # Compute Cumulative conditional probabilities of classes
         # compute gaussians for negative and positive classes

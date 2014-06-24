@@ -16,34 +16,18 @@ class WeakClassifier(object):
         self.theta_a = -maxint
         self.theta_b = maxint
 
+        self.error_left = None
+        self.error_right = None
+
     def classify(self, patch):
         """ Implementation of the decision stump
         :return:
         """
         response = self.feature.apply(patch.crop)
         if response < self.threshold:
-            epsilon = 1. / 2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold])
-            pos = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
-            cor = sum(pos[pos[:, 0] < self.threshold][:, 2])
-            inc = sum(pos[pos[:, 0] > self.threshold][:, 2])
-            return self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
+            return self.error_left
         else:
-            epsilon = 1. / 2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold])
-            pos = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
-            cor = sum(pos[pos[:, 0] > self.threshold][:, 2])
-            inc = sum(pos[pos[:, 0] < self.threshold][:, 2])
-            return - self.dominant_left * .5 * np.log((cor + epsilon) / (inc + epsilon))
-
-    def store_response(self, patch):
-        """ For a given patch saves the response in self.responses
-        """
-        response = self.feature.apply(patch.crop)
-        label = patch.label
-
-        if self.annotated_responses is None:
-            self.annotated_responses = np.array([response, label])
-        else:
-            self.annotated_responses = np.vstack((self.annotated_responses, [response, label]))
+            return self.error_right
 
     def train(self, weighted_patches):
         """ Given a training set T, finds the threshold that produces the lowest error and updates the error value of
@@ -99,7 +83,6 @@ class WeakClassifier(object):
             thr = t + .5
             if thr > max(response_values):
                 continue
-
             misclassified_left = left[left[:, 0] > thr]
             misclassified_right = right[right[:, 0] < thr]
 
@@ -110,14 +93,28 @@ class WeakClassifier(object):
             if err < self.error:
                 self.error = err
                 self.threshold = thr
+        self._cache_errors()
+
+    def _cache_errors(self):
+        """ Updates the error metrics of the classifier in order to avoid calculating them every time """
+        epsilon = 1. / (2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold]))
+        pos = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
+        cor = sum(pos[pos[:, 0] < self.threshold][:, 2])
+        inc = sum(pos[pos[:, 0] > self.threshold][:, 2])
+        self.error_left = self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
+
+        epsilon = 1. / (2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold]))
+        pos = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
+        cor = sum(pos[pos[:, 0] > self.threshold][:, 2])
+        inc = sum(pos[pos[:, 0] < self.threshold][:, 2])
+        self.error_right = -self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
+
 
     def plot_gaussian(self):
         """ Plots the mixture of Gaussians split into two classes (+, -) """
         sigma = np.std(self.annotated_responses)
-
         n = len(self.annotated_responses)
         h = 1.144 * sigma * n ** (-1/5)
-
         plot_gaussians(self.annotated_responses, sigma, h)
 
     def __gt__(self, other):
