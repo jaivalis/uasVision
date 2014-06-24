@@ -103,11 +103,9 @@ class StrongClassifier(object):
             if patch.label == +1:
                 pos_weighted_patches.append([patch, w])
                 pos.append(self.h_t(patch, t))
-                print ''
             elif patch.label == -1:
                 neg_weighted_patches.append([patch, w])
                 neg.append(self.h_t(patch, t))
-                print ''
 
         # Compute Cumulative conditional probabilities of classes
         # compute gaussians for negative and positive classes
