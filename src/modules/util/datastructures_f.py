@@ -2,6 +2,7 @@ import random
 
 
 def random_sample_weighted_patches(lst, sample_count):
+    # TODO make sure that some samples are contained
     """ Returns a random subsample of arr of size 'sample_count' containing 50% positive and 50% negative samples
     :param lst: List containing [patch, weight]
     :param sample_count: Size of returned dictionary

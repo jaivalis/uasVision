@@ -15,7 +15,7 @@ class WeakClassifier(object):
 
         self.theta_a = -maxint
         self.theta_b = maxint
-        # The errors that would be returned on either side of the decision stump
+        # The confidence of either side of the decision stump to be class +1
         self.conf_left = None
         self.conf_right = None
         # for Adaboost:
@@ -24,7 +24,7 @@ class WeakClassifier(object):
 
     def classify(self, patch):
         """ Implementation of the decision stump
-        :return:
+        :return: Probability of the patch being of class +1
         """
         response = self.feature.apply(patch.crop)
         if response < self.threshold:
@@ -96,30 +96,27 @@ class WeakClassifier(object):
             if err < self.error:
                 self.error = err
                 self.threshold = thr
-        self._eval_errors()
+        self._eval_confidences()
         self._eval_Z(misclassified)
 
     def _eval_Z(self, misclassified):
         self.z = 2. * np.sqrt(misclassified * (1. - misclassified))
 
-    def _eval_errors(self):
-        """ Updates the error metrics of the classifier in order to avoid calculating them every time """
+    def _eval_confidences(self):
+        """ Updates the confidences of the classifier in order to avoid calculating them every time """
         epsilon = 1e-5
 
-        left = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
-        cor = sum(left[left[:, 0] < self.threshold][:, 2])
-        inc = sum(left[left[:, 0] > self.threshold][:, 2])
-        self.conf_left = self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
+        positives = self.annotated_responses[self.annotated_responses[:, 1] == +1]
+        pos_left = len(positives[positives[:, 0] < self.threshold])
+        all_left = len(self.annotated_responses[self.annotated_responses[:, 0] < self.threshold])
+        pos_right = len(positives[positives[:, 0] > self.threshold])
+        all_right = len(self.annotated_responses[self.annotated_responses[:, 0] > self.threshold])
 
-        right = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
-        cor = sum(right[right[:, 0] > self.threshold][:, 2])
-        inc = sum(right[right[:, 0] < self.threshold][:, 2])
-        self.conf_right = -self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
+        self.conf_left = .5 * np.log((pos_left + epsilon)/(all_left + epsilon))
+        self.conf_right = .5 * np.log((pos_right + epsilon)/(all_right + epsilon))
 
     def update_alpha(self, weighted_patches):
-        """
-        :return:
-        """
+        """ Used by Adaboost to update the weight of the classifier """
         error = 0
         for patch, w in weighted_patches:
             predicted_label = self.classify(patch)
@@ -152,5 +149,5 @@ class WeakClassifier(object):
             theta_a = -999
         if theta_b == maxint:
             theta_b = +999
-        return "Feature: {%s} threshold: %f, dominant_left: %d, error: %f, theta_a: %f, theta_b: %f" %\
+        return "Feature: {%s} threshold: %.4f, dominant_left: %d, error: %.2f, theta_a: %.2f, theta_b: %.2f" %\
             (self.feature, self.threshold, self.dominant_left, self.error, theta_a, theta_b)

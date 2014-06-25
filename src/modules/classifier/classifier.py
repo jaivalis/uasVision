@@ -48,8 +48,8 @@ class StrongClassifier(object):
         weighted_patches = []
         for patch in sample_pool:                              # weight all patches: training pool P
             weighted_patches.append([patch, 1. / len(sample_pool)])
-            if patch.label == +1:
-                pos_patch = patch                               # for presentation and report
+            # if patch.label == +1:
+            #     pos_patch = patch                              # PRESENTATION, REPORT
         # shuffle training pool
         weighted_patches = random_sample_weighted_patches(weighted_patches, len(weighted_patches))
 
@@ -65,7 +65,7 @@ class StrongClassifier(object):
                 h_t = self._fetch_best_weak_classifier(weighted_patches)
             elif self.algorithm == 'wald':
                 h_t = self._fetch_best_weak_classifier(training_data)
-            h_t.visualize(pos_patch)
+            # h_t.visualize(pos_patch)                       # PRESENTATION, REPORT
             self.classifiers.append(copy.deepcopy(h_t))    # add it to the strong classifier
             print self
 
@@ -94,7 +94,6 @@ class StrongClassifier(object):
             w_prime = w * np.exp(-a_t * true_label * pred) / z_t
 
             ret.append([patch, w_prime])
-        assert len(ret) == len(weighted_patches)
         return ret
 
     def _reweight_and_discard_irrelevant(self, weighted_sample_pool, t):
@@ -229,7 +228,7 @@ class StrongClassifier(object):
             ret = 0
             for t in range(0, len(self.classifiers)):
                 wc = self.classifiers[t]
-                a = -1  # todo add weight
+                a = wc.alpha
                 ret += wc.classify(patch) * a
             return np.sign(ret)
         elif self.algorithm == 'wald':
