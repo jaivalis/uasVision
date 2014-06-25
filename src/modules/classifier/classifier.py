@@ -245,10 +245,10 @@ class StrongClassifier(object):
                 return -1
 
     def __str__(self):
-        ret = "%s Strong classifier \n{" % self.algorithm.title()
+        ret = "%s Strong classifier {\n" % self.algorithm.title()
         cl = 1
         for wc in self.classifiers:
-            ret += "\tWeak classifier #" + str(cl) + " - " + str(wc) + "\n"
+            ret += "\tWeak classifier #" + str(cl) + ":\n\t\t" + str(wc) + "\n"
             cl += 1
         return ret + "}"
 

@@ -142,7 +142,11 @@ class WeakClassifier(object):
         return self.w == other.w and self.error == other.error
 
     def __str__(self):
-        ret = "Feature: {" + str(self.feature) + "}"
-        ret += " threshold:" + str(self.threshold) + " dominant_left:" + str(self.dominant_left)
-        ret += " error:" + str(self.error)
-        return ret
+        theta_a = self.theta_a  # for readability
+        theta_b = self.theta_b
+        if theta_a == -maxint:
+            theta_a = -999
+        if theta_b == maxint:
+            theta_b = +999
+        return "Feature: {%s} threshold: %f, dominant_left: %d, error: %f, theta_a: %f, theta_b: %f" %\
+            (self.feature, self.threshold, self.dominant_left, self.error, theta_a, theta_b)
