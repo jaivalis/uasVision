@@ -32,7 +32,7 @@ class StrongClassifier(object):
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
             self.all_classifiers.append(wc)
-        self.all_classifiers = self.all_classifiers[-500:len(self.all_classifiers)]  # TODO remove this, testing
+        self.all_classifiers = self.all_classifiers[0:len(self.all_classifiers)]  # TODO remove this, testing
         print "Initialized %d weak classifiers." % (len(self.all_classifiers))
 
         # Phase2: Algorithm2: Learning with bootstrapping
@@ -48,7 +48,8 @@ class StrongClassifier(object):
         weighted_patches = []
         for patch in sample_pool:                              # weight all patches: training pool P
             weighted_patches.append([patch, 1. / len(sample_pool)])
-
+            if patch.label == +1:
+                pos_patch = patch                               # for presentation and report
         # shuffle training pool
         weighted_patches = random_sample_weighted_patches(weighted_patches, len(weighted_patches))
 
@@ -64,7 +65,7 @@ class StrongClassifier(object):
                 h_t = self._fetch_best_weak_classifier(weighted_patches)
             elif self.algorithm == 'wald':
                 h_t = self._fetch_best_weak_classifier(training_data)
-
+            h_t.visualize(pos_patch)
             self.classifiers.append(copy.deepcopy(h_t))    # add it to the strong classifier
             print self
 

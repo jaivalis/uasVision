@@ -1,6 +1,8 @@
 from modules.util.image_f import *
 from featureHolder import FeatureHolder
 import numpy as np
+from cv2 import rectangle, imshow, waitKey, cvtColor, COLOR_GRAY2RGB
+from scipy.misc import imresize
 
 
 class HaarFeature(object):
@@ -167,6 +169,31 @@ class HaarFeature(object):
 
     def __eq__(self, other):
         return self.h == other.h and self.w == other.h
+
+    def visualize(self, crop):
+        #crop = to_rgb(crop)
+        if self.type == 0:
+            rectangle(crop, (self.x, self.y), (self.x + self.hw - 1, self.y + self.h - 1), (1, 0, 0))
+            rectangle(crop, (self.x + self.hw, self.y), (self.x + self.w - 1, self.y + self.h - 1), (0, 1, 0))
+        elif self.type == 1:
+            rectangle(crop,(self.x, self.y), (self.x + self.w - 1, self.y + self.hh - 1), (1, 0, 0))
+            rectangle(crop, (self.x, self.y + self.hh), (self.x + self.w - 1, self.y + self.h - 1), (0, 1, 0))
+        elif self.type == 4:
+            rectangle(crop, (self.x, self.y), (self.x + self.tw - 1, self.y + self.h - 1), (1, 0, 0))
+            rectangle(crop, (self.x + self.tw, self.y), (self.x + self.w - 1, self.y + 2*self.th - 1), (0, 1, 0))
+            rectangle(crop, (self.x, self.y + 2 * self.th), (self.x + self.w - 1, self.y + 3*self.th - 1), (1, 0, 0))
+        elif self.type == 3:
+            rectangle(crop, (self.x, self.y), (self.x + self.w - 1, self.y + self.th - 1), (1, 0, 0))
+            rectangle(crop, (self.x, self.y + self.th), (self.x + self.w - 1, self.y + 2*self.th - 1), (0, 1, 0))
+            rectangle(crop, (self.x + 2 * self.tw, self.y), (self.x + self.w - 1, self.y + 3*self.th - 1), (1, 0, 0))
+        elif self.type == 2:
+            rectangle(crop, (self.x, self.y), (self.x + self.hw - 1, self.y + self.hh - 1), (1, 0, 0))
+            rectangle(crop, (self.x + self.hw, self.y), (self.x + self.w - 1, self.y + self.hh - 1), (0, 1, 0))
+            rectangle(crop, (self.x, self.y + self.hh), (self.x + self.hw - 1, self.y + self.h - 1), (0, 1, 0))
+            rectangle(crop, (self.x + self.hw, self.y + self.hh), (self.x + self.w - 1, self.y + self.h - 1), (1, 0, 0))
+        crop = imresize(crop, (100, 100))
+        imshow('image', crop)
+        waitKey(0)
 
 
 class HaarHolder(FeatureHolder):

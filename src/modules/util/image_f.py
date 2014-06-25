@@ -15,6 +15,12 @@ def get_integral_image(img):
     return integral(img)
 
 
+def to_rgb(im):
+    # as 3a, but we add an extra copy to contiguous 'C' order
+    # data
+    return np.dstack([im.astype(np.uint8)] * 3).copy(order='C')
+
+
 def get_random_patch(img, size, frame_id):
     h, w = np.shape(img)
 

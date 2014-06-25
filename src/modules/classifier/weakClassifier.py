@@ -135,6 +135,10 @@ class WeakClassifier(object):
         h = 1.144 * sigma * n ** (-1/5)
         plot_gaussians(self.annotated_responses, sigma, h)
 
+    def visualize(self, patch):
+        crop = patch.crop / 255
+        self.feature.visualize(crop)
+
     def __gt__(self, other):
         return self.error > other.error
 
