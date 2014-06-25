@@ -47,6 +47,7 @@ class VideoFileIS(InputStream):
     def get_grayscale_img(self, frame):
         self.video.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, frame)
         ret, image = self.video.read()
+        image = np.array(image, dtype='int64')
         return self.rgb2gray(image)
 
     def getNextRGBImage(self):

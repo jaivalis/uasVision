@@ -1,5 +1,6 @@
 from modules.util.image_f import *
 from featureHolder import FeatureHolder
+import numpy as np
 
 
 class HaarFeature(object):
@@ -24,6 +25,7 @@ class HaarFeature(object):
         y = self.y
 
         img = get_downsampled(img)
+        img = get_integral_image(img)
 
         if self.type == 0:  # horizontal
             #print 'A1= ' + str(x) + ',' + str(y)
@@ -102,7 +104,7 @@ class HaarFeature(object):
             print 'D3= ' + str(x + self.w - 1) + ',' + str(y + 3*self.th - 1)
             d3 = img[x + self.w - 1, y + 3*self.th - 1]
             print 'A1= ' + str(x) + ',' + str(y)
-            a1 = img[x,y]
+            a1 = img[x, y]
             print 'A2= ' + str(x) + ',' + str(y + self.th)
             a2 = img[x, y + self.th]
             print 'A3= ' + str(x) + ',' + str(y + 2 * self.th)
@@ -129,7 +131,7 @@ class HaarFeature(object):
             #print 'D2= ' + str(x + self.w - 1) + ',' + str(y + self.hh - 1)
             d2 = img[x + self.w - 1, y + self.hh - 1]
             #print 'D3= ' + str(x + self.hw - 1) + ',' + str(y + self.h- 1)
-            d3 = img[x + self.hw - 1, y + self.h- 1]
+            d3 = img[x + self.hw - 1, y + self.h - 1]
             #print 'D4= ' + str(x + self.w - 1) + ',' + str(y + self.h - 1)
             d4 = img[x + self.w - 1, y + self.h - 1]
             #print 'A1= ' + str(x) + ',' + str(y)
@@ -174,12 +176,12 @@ class HaarHolder(FeatureHolder):
         features = np.array([[4, 8], [8, 4], [8, 8], [12, 4], [8, 8]])
 
         for feature in xrange(3):                                 # for each feature
-            sizex = features[feature, 0]
-            sizey = features[feature, 1]
-            for x in range(w - sizex + 1):                        # for each pixel in width
-                for y in range(h - sizey + 1):                    # for each pixel in height
-                    for width in range(sizex, w - x + 1, sizex):  # for each width possible in window size
-                        height = sizey/float(sizex) * width
+            size_x = features[feature, 0]
+            size_y = features[feature, 1]
+            for x in range(w - size_x + 1):                        # for each pixel in width
+                for y in range(h - size_y + 1):                    # for each pixel in height
+                    for width in range(size_x, w - x + 1, size_x):  # for each width possible in window size
+                        height = size_y/float(size_x) * width
 
                         # TODO
                         if height + y >= h:
@@ -194,30 +196,10 @@ class HaarHolder(FeatureHolder):
     def get(self):
         pass
 
+if __name__ == '__main__':
+    hh = HaarHolder((24, 24))
+    for feat_ in hh.features:
+        print feat_
 
-# class HaarExtractor(object):
-#
-#     def update_patch_haar(self, patch):
-#         features = self.extract_haar_features(patch.crop)
-#         patch.update_haar_features(features)
-#
-#     @staticmethod
-#     def extract_haar_features(crop):
-#         """
-#         Returns a dictionary containing <applied_feature, value> pairs
-#         """
-#
-#             print "Features ", feature, ": ", time.time() - start_time, "seconds"
-#             print "Size Haar: ", np.shape(ret[feat])
-#         return ret
-
-# if __name__ == '__main__':
-#     hh = HaarHolder((24, 24))
-#     for h in hh.features:
-#         print h
-
-    # im = np.random.rand(24, 24)
-    # ii = get_integral_image(im)
-    # h = HaarExtractor()
-    # f = h.extract_haar_features(ii)
-    # print f.keys()[0]
+    im = np.random.rand(24, 24)
+    ii = get_integral_image(im)

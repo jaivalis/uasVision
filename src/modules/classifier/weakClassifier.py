@@ -18,6 +18,9 @@ class WeakClassifier(object):
         # The errors that would be returned on either side of the decision stump
         self.conf_left = None
         self.conf_right = None
+        # for Adaboost:
+        self.alpha = None
+        self.z = None
 
     def classify(self, patch):
         """ Implementation of the decision stump
@@ -44,7 +47,7 @@ class WeakClassifier(object):
                 self.annotated_responses = np.vstack((self.annotated_responses, [response, true_label, w]))
 
         response_values = self.annotated_responses[:, 0]
-        pos_response_values = self.annotated_responses[self.annotated_responses[:, 1] == 1]
+        pos_response_values = self.annotated_responses[self.annotated_responses[:, 1] == +1]
         neg_response_values = self.annotated_responses[self.annotated_responses[:, 1] == -1]
 
         # find which class occupies the left and which the right portion of the responses
@@ -94,20 +97,36 @@ class WeakClassifier(object):
                 self.error = err
                 self.threshold = thr
         self._eval_errors()
+        self._eval_Z(misclassified)
+
+    def _eval_Z(self, misclassified):
+        self.z = 2. * np.sqrt(misclassified * (1. - misclassified))
 
     def _eval_errors(self):
         """ Updates the error metrics of the classifier in order to avoid calculating them every time """
-        epsilon = 1. / (2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold]))
+        epsilon = 1e-5
+
         left = self.annotated_responses[self.annotated_responses[:, 1] == self.dominant_left]
         cor = sum(left[left[:, 0] < self.threshold][:, 2])
         inc = sum(left[left[:, 0] > self.threshold][:, 2])
         self.conf_left = self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
 
-        epsilon = 1. / (2. * len(self.annotated_responses[self.annotated_responses[:, 1] < self.threshold]))
         right = self.annotated_responses[self.annotated_responses[:, 1] == -self.dominant_left]
         cor = sum(right[right[:, 0] > self.threshold][:, 2])
         inc = sum(right[right[:, 0] < self.threshold][:, 2])
         self.conf_right = -self.dominant_left * .5 * np.log((cor + epsilon)/(inc + epsilon))
+
+    def update_alpha(self, weighted_patches):
+        """
+        :return:
+        """
+        error = 0
+        for patch, w in weighted_patches:
+            predicted_label = self.classify(patch)
+            e = .5 * patch.label * predicted_label
+            error += e
+        a = .5 * np.log((1. + error) / (1. - error))
+        self.alpha = a
 
     def plot_gaussian(self):
         """ Plots the mixture of Gaussians split into two classes (+, -) """

@@ -5,7 +5,15 @@ import copy
 
 
 class StrongClassifier(object):
-    def __init__(self, training_stream, feature_holder, alpha, beta, gamma, layers=10, sample_count=1000, algorithm='wald'):
+    def __init__(self,
+                 training_stream,
+                 feature_holder,
+                 alpha,
+                 beta,
+                 gamma,
+                 layers=10,
+                 sample_count=1000,
+                 algorithm='wald'):
         self.training_stream = training_stream
         self.feature_holder = feature_holder
         self.A = (1. - beta) / alpha
@@ -13,6 +21,8 @@ class StrongClassifier(object):
         self.gamma = gamma
         self.layers = layers
         self.all_classifiers = []  # len(classifiers) = T
+        if algorithm not in ['adaboost', 'wald']:
+            raise ValueError('Unsupported learning algorithm')
         self.algorithm = algorithm
 
         self.classifiers = []
@@ -22,7 +32,7 @@ class StrongClassifier(object):
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
             self.all_classifiers.append(wc)
-        self.all_classifiers = self.all_classifiers[-2000:len(self.all_classifiers)]  # TODO remove this, testing
+        self.all_classifiers = self.all_classifiers[-500:len(self.all_classifiers)]  # TODO remove this, testing
         print "Initialized %d weak classifiers." % (len(self.all_classifiers))
 
         # Phase2: Algorithm2: Learning with bootstrapping
@@ -33,38 +43,58 @@ class StrongClassifier(object):
         Outputs the strong classifier with the theta_a, theta_b of the weak classifiers updated
         """
         training_set_size = 150  # TODO: change to 1000, 500 or something
-        sample_pool = self.training_stream.extract_training_patches(sample_count, negative_ratio=1)
+        sample_pool = self.training_stream.extract_training_patches(sample_count, negative_ratio=1.)
         # initialize weights
         weighted_patches = []
         for patch in sample_pool:                              # weight all patches: training pool P
             weighted_patches.append([patch, 1. / len(sample_pool)])
 
         # shuffle training pool
-        weighted_patches = random_sample(weighted_patches, len(weighted_patches))
+        weighted_patches = random_sample_weighted_patches(weighted_patches, len(weighted_patches))
 
-        if self.wald:
-            training_data = random_sample(weighted_patches, training_set_size)  # sample 'training_set_size' many samples
+        if self.algorithm == 'adaboost':  # Shuffle the training data
+            training_data = random_sample_weighted_patches(weighted_patches, len(weighted_patches))
+        elif self.algorithm == 'wald':    # Sample training_set_size samples
+            training_data = random_sample_weighted_patches(weighted_patches, training_set_size)
 
-        for t in range(self.layers+1):
-            # choose the weak classifier with the minimum error
-            if self.algorithm == 'wald':
-                h_t = self._fetch_best_weak_classifier(training_data)
-            else:
+        for t in range(self.layers+1):  # choose the weak classifier with the minimum error
+            print "Learn with bootstrapping using %s, layer #%d" % (self.algorithm.title(), t+1)
+
+            if self.algorithm == 'adaboost':
                 h_t = self._fetch_best_weak_classifier(weighted_patches)
-            self.classifiers.append(copy.deepcopy(h_t))    # add it to the strong classifier
+            elif self.algorithm == 'wald':
+                h_t = self._fetch_best_weak_classifier(training_data)
 
+            self.classifiers.append(copy.deepcopy(h_t))    # add it to the strong classifier
             print self
-            if self.algorithm == 'wald':
+
+            if self.algorithm == 'adaboost':
+                self.classifiers[-1].update_alpha(weighted_patches)
+                weighted_patches = self._adaboost_reweight(weighted_patches, t)
+            elif self.algorithm == 'wald':
                 neg, pos = self._estimate_ratios(training_data, t)
                 # find decision thresholds for the strong classifier
                 self._tune_thresholds(pos, neg, t)
                 # throw away training samples that fall in our thresholds
                 weighted_patches = self._reweight_and_discard_irrelevant(weighted_patches, t)
                 # sample new training data
-                training_data = random_sample(weighted_patches, training_set_size)
-            else:
-                self.compute_alpha()
-                weighted_patches = self.reweight(weighted_patches, t)
+                training_data = random_sample_weighted_patches(weighted_patches, training_set_size)
+
+    def _adaboost_reweight(self, weighted_patches, t):
+        if self.algorithm != 'adaboost':
+            raise ValueError('Wrong algorithm for reweighing')
+        ret = []
+        wc = self.classifiers[t]
+        z_t = wc.z
+        a_t = wc.alpha
+        for patch, w in weighted_patches:
+            pred = wc.classify(patch)
+            true_label = patch.label
+            w_prime = w * np.exp(-a_t * true_label * pred) / z_t
+
+            ret.append([patch, w_prime])
+        assert len(ret) == len(weighted_patches)
+        return ret
 
     def _reweight_and_discard_irrelevant(self, weighted_sample_pool, t):
         """ Throws away training samples that fall in the predefined thresholds and reweighs the patches
@@ -117,7 +147,7 @@ class StrongClassifier(object):
         # compute gaussians for negative and positive classes
         all_patches = np.append(pos, neg)
         sigma = np.std(all_patches)
-        h = 1.144 * sigma * len(all_patches) ** -0.2
+        h = 1.144 * sigma * len(all_patches) ** (-0.2)
         lin_space = np.linspace(-1, 1, num=1000)
         neg_sum_of_gaussians = sum_of_gaussians(neg, lin_space, h)
         pos_sum_of_gaussians = sum_of_gaussians(pos, lin_space, h)
@@ -162,10 +192,19 @@ class StrongClassifier(object):
         :return: The best classifier
         """
         min_error = 2.
+        print "Training and measuring error for %d classifiers" % len(self.all_classifiers),
+        dec = .05
+        i = 0
         for wc in self.all_classifiers:
+            i += 1
             wc.train(weighted_patches)
             if wc.error < min_error:
+                min_error = wc.error
                 ret = wc
+            if i > dec * len(self.all_classifiers):
+                dec += .05
+                print ".",
+        print "[DONE]"
         return ret
 
     def h_t(self, x, t):
@@ -185,22 +224,29 @@ class StrongClassifier(object):
         :param patch: Patch to be classified
         :return: +1, -1
         """
-        for t in range(0, len(self.classifiers)):
-            h_ = self.h_t(patch, t)
-            wc = self.classifiers[t]
-            if h_ >= wc.theta_b:
+        if self.algorithm == 'adaboost':
+            ret = 0
+            for t in range(0, len(self.classifiers)):
+                wc = self.classifiers[t]
+                a = -1  # todo add weight
+                ret += wc.classify(patch) * a
+            return np.sign(ret)
+        elif self.algorithm == 'wald':
+            for t in range(0, len(self.classifiers)):
+                h_ = self.h_t(patch, t)
+                wc = self.classifiers[t]
+                if h_ >= wc.theta_b:
+                    return +1
+                if h_ <= wc.theta_a:
+                    return -1
+            if self.h_t(patch, self.layers) > self.gamma:
                 return +1
-            if h_ <= wc.theta_a:
+            else:
                 return -1
-        if self.h_t(patch, self.layers) > self.gamma:
-            return +1
-        else:
-            return -1
 
     def __str__(self):
-        ret = ""
+        ret = "%s Strong classifier \n{" % self.algorithm.title()
         cl = 1
-        ret += "{\n"
         for wc in self.classifiers:
             ret += "\tWeak classifier #" + str(cl) + " - " + str(wc) + "\n"
             cl += 1

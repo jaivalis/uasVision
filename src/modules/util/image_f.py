@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from scipy.misc import imresize
+from cv2 import integral
 
 from modules.datastructures.patch import Patch
 
@@ -11,12 +12,7 @@ def get_downsampled(img):
 
 
 def get_integral_image(img):
-    w, h = img.shape
-    ret = np.zeros((w, h))
-    for x in range(w):
-        for y in range(h):
-            ret[x, y] = np.sum(img[0:x+1, 0:y+1])
-    return ret
+    return integral(img)
 
 
 def get_random_patch(img, size, frame_id):
