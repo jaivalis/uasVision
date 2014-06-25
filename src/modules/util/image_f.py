@@ -7,7 +7,7 @@ from modules.datastructures.patch import Patch
 
 
 def get_downsampled(img):
-    ret = imresize(img, (60, 60))
+    ret = imresize(img, (24, 24))
     return ret
 
 
