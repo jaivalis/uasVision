@@ -3,6 +3,7 @@ from modules.util.math_f import *
 from modules.util.datastructures_f import *
 from sys import maxint
 import copy
+import time
 
 
 class StrongClassifier(object):
@@ -34,7 +35,7 @@ class StrongClassifier(object):
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
             self.all_classifiers.append(wc)
-        self.all_classifiers = self.all_classifiers[-50:len(self.all_classifiers)]  # TODO remove this, testing
+        self.all_classifiers = self.all_classifiers
         print "Initialized %d weak classifiers." % (len(self.all_classifiers))
 
         # Phase2: Algorithm2: Learning with bootstrapping
@@ -44,6 +45,7 @@ class StrongClassifier(object):
         """ Algorithm2 Sochman
         Outputs the strong classifier with the theta_a, theta_b of the weak classifiers updated
         """
+        tic = time.clock()
         training_set_size = 150  # TODO: change to 1000, 500 or something
         sample_pool = self.training_stream.extract_training_patches(sample_count, negative_ratio=1.)
         # initialize weights
@@ -84,6 +86,8 @@ class StrongClassifier(object):
                 if len(training_data) == 0:
                     print "no more training data!"
                     break
+            toc = time.clock()
+            print toc - tic
             print self
 
     def _adaboost_reweight(self, weighted_patches, t):
