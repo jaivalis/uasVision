@@ -100,7 +100,7 @@ class WeakClassifier(object):
 
         misclassified_left = left[left[:, 0] > self.threshold]
         misclassified_right = right[right[:, 0] < self.threshold]
-        self._eval_Z(misclassified=sum(misclassified_left[:, 2]) + sum(misclassified_right[:, 2]))
+        self._eval_Z(sum(misclassified_left[:, 2]) + sum(misclassified_right[:, 2]))
 
     def _eval_Z(self, misclassified_weight):
         """ Evaluates self.z, weight normalizing factor used by Adaboost.
@@ -123,13 +123,11 @@ class WeakClassifier(object):
 
     def update_alpha(self, weighted_patches):
         """ Used by Adaboost to update the weight of the classifier """
-        error = 0
+        r = 0
         for patch, w in weighted_patches:
             predicted_label = self.classify(patch)
-            e = .5 * patch.label * predicted_label
-            error += e
-        a = .5 * np.log((1. + error) / (1. - error))
-        self.alpha = a
+            r += w * patch.label * predicted_label
+        self.alpha = .5 * np.log((1. + r) / (1. - r))
 
     def plot_gaussian(self):
         """ Plots the mixture of Gaussians split into two classes (+, -) """
@@ -151,9 +149,12 @@ class WeakClassifier(object):
     def __str__(self):
         theta_a = self.theta_a  # for readability
         theta_b = self.theta_b
+        alpha = self.alpha
         if theta_a == -maxint:
             theta_a = -999
         if theta_b == maxint:
             theta_b = +999
-        return "Feature: {%s} threshold: %.4f, dominant_left: %d, error: %.2f, theta_a: %.2f, theta_b: %.2f" %\
-            (self.feature, self.threshold, self.dominant_left, self.error, theta_a, theta_b)
+        if alpha is None:
+            alpha = -999
+        return "Feature: {%s} threshold: %.4f, dominant_left: %d, error: %.2f, alpha: %.2f, theta_a: %.2f, theta_b: " \
+               "%.2f" % (self.feature, self.threshold, self.dominant_left, self.error, alpha, theta_a, theta_b)

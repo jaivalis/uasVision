@@ -39,7 +39,7 @@ class HaarFeature(object):
             b1 = img[self.i, self.j + self.w - 1]
             c1 = img[self.i + self.h - 1, self.j]
             d1 = img[self.i + self.h - 1, self.j + self.w - 1]
-            S1 =  a1 - b1 - c1 + d1
+            S1 = a1 - b1 - c1 + d1
             a2 = img[self.i, self.j + self.w]
             b2 = img[self.i, self.j + 2 * self.w - 1]
             c2 = img[self.i + self.h - 1, self.j + self.w]

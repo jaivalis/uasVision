@@ -68,7 +68,6 @@ class StrongClassifier(object):
                 h_t = self._fetch_best_weak_classifier(training_data)
             # h_t.visualize(pos_patch)                       # PRESENTATION, REPORT
             self.classifiers.append(copy.deepcopy(h_t))    # add it to the strong classifier
-            print self
 
             if self.algorithm == 'adaboost':
                 self.classifiers[-1].update_alpha(weighted_patches)
@@ -81,6 +80,8 @@ class StrongClassifier(object):
                 weighted_patches = self._reweight_and_discard_irrelevant(weighted_patches, t)
                 # sample new training data
                 training_data = random_sample_weighted_patches(weighted_patches, training_set_size)
+            print self
+
 
     def _adaboost_reweight(self, weighted_patches, t):
         if self.algorithm != 'adaboost':
