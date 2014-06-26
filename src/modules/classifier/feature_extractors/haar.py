@@ -23,18 +23,33 @@ class HaarFeature(object):
         img = get_integral_image(img)
 
         if self.type == 0:
-            S1 = img[self.i, self.j] - img[self.i, self.j + self.w - 1] \
-                 - img[self.i + self.h - 1, self.j] + img[self.i + self.h - 1, self.j + self.w - 1]
-            S2 = img[self.i, self.j + self.w] - img[self.i, self.j + 2 * self.w - 1] \
-                 - img[self.i + self.h - 1, self.j + self.w] + img[self.i + self.h - 1, self.j + 2 * self.w - 1]
+            a1 = img[self.i, self.j]
+            b1 = img[self.i, self.j + self.w - 1]
+            c1 = img[self.i + self.h - 1, self.j]
+            d1 = img[self.i + self.h - 1, self.j + self.w - 1]
+            S1 = a1 - b1 - c1 + d1
+            a2 = img[self.i, self.j + self.w]
+            b2 = img[self.i, self.j + 2 * self.w - 1]
+            c2 = img[self.i + self.h - 1, self.j + self.w]
+            d2 = img[self.i + self.h - 1, self.j + 2 * self.w - 1]
+            S2 = a2 - b2 - c2 + d2
             ret = S1 - S2
         if self.type == 1:
-            S1 = img[self.i, self.j] - img[self.i, self.j + self.w - 1] \
-                 - img[self.i + self.h - 1, self.j] + img[self.i + self.h - 1, self.j + self.w - 1]
-            S2 = img[self.i, self.j + self.w] - img[self.i, self.j + 2 * self.w - 1] \
-                 - img[self.i + self.h - 1, self.j + self.w] + img[self.i + self.h - 1, self.j + 2 * self.w - 1]
-            S3 = img[self.i, self.j + 2 * self.w] - img[self.i, self.j + 3 * self.w - 1] \
-                 - img[self.i + self.h - 1, self.j + 2 * self.w] + img[self.i + self.h - 1, self.j + 2 * self.w]
+            a1 = img[self.i, self.j]
+            b1 = img[self.i, self.j + self.w - 1]
+            c1 = img[self.i + self.h - 1, self.j]
+            d1 = img[self.i + self.h - 1, self.j + self.w - 1]
+            S1 =  a1 - b1 - c1 + d1
+            a2 = img[self.i, self.j + self.w]
+            b2 = img[self.i, self.j + 2 * self.w - 1]
+            c2 = img[self.i + self.h - 1, self.j + self.w]
+            d2 = img[self.i + self.h - 1, self.j + 2 * self.w - 1]
+            S2 = a2 - b2 - c2 + d2
+            a3 = img[self.i, self.j + 2 * self.w]
+            b3 = img[self.i, self.j + 3 * self.w - 1]
+            c3 = img[self.i + self.h - 1, self.j + 2 * self.w]
+            d3 = img[self.i + self.h - 1, self.j + 2 * self.w]
+            S3 = a3 - b3 - c3 + d3
             ret = S1 - S2 + S3
         if self.type == 2:
             S1 = img[self.i, self.j] - img[self.i, self.j + self.w - 1] \
@@ -48,7 +63,7 @@ class HaarFeature(object):
             S2 = img[self.i + self.h, self.j] - img[self.i + self.h, self.j + self.w - 1] \
                  - img[self.i + 2 * self.h - 1, self.j] + img[self.i + 2 * self.h - 1, self.j + self.w - 1]
             S3 = img[self.i + 2 * self.h, self.j] - img[self.i + 2 * self.h, self.j + self.w - 1] \
-                 - img[self.i + 3 * self.h - 1, self.j] + img[self.i + 3 * self.h - 1,  self.j + self.w - 1]
+                 - img[self.i + 3 * self.h - 1, self.j] + img[self.i + 3 * self.h - 1, self.j + self.w - 1]
             ret = S1 - S2 + S3
         if self.type == 4:
             S1 = img[self.i, self.j] - img[self.i, self.j + self.w - 1] \
@@ -58,7 +73,7 @@ class HaarFeature(object):
             S3 = img[self.i, self.j + self.w] - img[self.i, self.j + 2 * self.w - 1] \
                  - img[self.i + self.h - 1, self.j + self.w] + img[self.i + self.h - 1, self.j + 2 * self.w - 1]
             S4 = img[self.i + self.h, self.j + self.w] - img[self.i + self.h, self.j + 2 * self.w - 1] \
-                 - img[self.i + 2 * self.h - 1, self.j + self.w] + img[self.i + 2 * self.h - 1,  self.j + 2 * self.w - 1]
+                 - img[self.i + 2 * self.h - 1, self.j + self.w] + img[self.i + 2 * self.h - 1, self.j + 2 * self.w - 1]
             ret = S1 - S2 - S3 + S4
         return ret
 
@@ -66,7 +81,7 @@ class HaarFeature(object):
         return self.h == other.h and self.w == other.h
 
     def visualize(self, crop):
-        #crop = to_rgb(crop)
+        # crop = to_rgb(crop)
         if self.type == 0:
             rectangle(crop, (self.i, self.j), (self.i + self.h - 1, self.j + self.w - 1), (1, 0, 0))
             rectangle(crop, (self.i, self.j + self.w), (self.i + self.h - 1, self.j + 2 * self.w - 1), (0, 1, 0))
@@ -80,19 +95,19 @@ class HaarFeature(object):
         elif self.type == 3:
             rectangle(crop, (self.i, self.j), (self.i + self.h - 1, self.j + self.w - 1), (1, 0, 0))
             rectangle(crop, (self.i + self.h, self.j), (self.i + 2 * self.h - 1, self.j + self.w - 1), (0, 1, 0))
-            rectangle(crop, (self.i + 2 * self.h, self.j), (self.i + 3 * self.h - 1,  self.j + self.w - 1), (1, 0, 0))
+            rectangle(crop, (self.i + 2 * self.h, self.j), (self.i + 3 * self.h - 1, self.j + self.w - 1), (1, 0, 0))
         elif self.type == 4:
             rectangle(crop, (self.i, self.j), (self.i + self.h - 1, self.j + self.w - 1), (1, 0, 0))
             rectangle(crop, (self.i, self.j + self.w), (self.i + self.h - 1, self.j + 2 * self.w - 1), (0, 1, 0))
             rectangle(crop, (self.i + self.h, self.j), (self.i + 2 * self.h - 1, self.j + self.w - 1), (0, 1, 0))
-            rectangle(crop, (self.i + self.h, self.j + self.w), (self.i + 2 * self.h - 1,  self.j + 2 * self.w - 1), (1, 0, 0))
+            rectangle(crop, (self.i + self.h, self.j + self.w), (self.i + 2 * self.h - 1, self.j + 2 * self.w - 1),
+                      (1, 0, 0))
         crop = imresize(crop, (100, 100))
         imshow('image', crop)
         waitKey(0)
 
 
 class HaarHolder(FeatureHolder):
-
     def __init__(self, (h, w)):
         self.features = []
         for i in range(w):
@@ -143,6 +158,7 @@ class HaarHolder(FeatureHolder):
 
     def get(self):
         pass
+
 
 if __name__ == '__main__':
     hh = HaarHolder((24, 24))
