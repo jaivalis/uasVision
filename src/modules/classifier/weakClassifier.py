@@ -70,12 +70,16 @@ class WeakClassifier(object):
         pos = self.annotated_responses[self.annotated_responses[:, 1] == +1]
         neg = self.annotated_responses[self.annotated_responses[:, 1] == -1]
 
-        smaller_pos = len(pos[pos[:, 0] < self.threshold])
-        bigger_pos = len(pos[pos[:, 0] > self.threshold])
-        smaller_neg = len(neg[neg[:, 0] < self.threshold])
-        bigger_neg = len(neg[neg[:, 0] > self.threshold])
-        return "+{ %d < [threshold] < %d } | -{ %d < [threshold] < %d }" \
-               % (smaller_pos, bigger_pos, smaller_neg, bigger_neg)
+        smaller_pos = pos[pos[:, 0] < self.threshold]
+        smaller_pos_w = np.sum(smaller_pos[:, 2])
+        bigger_pos = pos[pos[:, 0] > self.threshold]
+        bigger_pos_w = np.sum(bigger_pos[:, 2])
+        smaller_neg = neg[neg[:, 0] < self.threshold]
+        smaller_neg_w = np.sum(smaller_neg[:, 2])
+        bigger_neg = neg[neg[:, 0] > self.threshold]
+        bigger_neg_w = np.sum(bigger_neg[:, 2])
+        return "+{ %.2f < [threshold] < %.2f } | -{ %.2f < [threshold] < %.2f }" \
+               % (smaller_pos_w, bigger_pos_w, smaller_neg_w, bigger_neg_w)
 
     def _eval_Z(self, misclassified_weight):
         """ Evaluates self.z, weight normalizing factor used by Adaboost.

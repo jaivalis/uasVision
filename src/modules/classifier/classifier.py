@@ -81,6 +81,9 @@ class StrongClassifier(object):
                 weighted_patches = self._reweight_and_discard_irrelevant(weighted_patches, t)
                 # sample new training data
                 training_data = random_sample_weighted_patches(weighted_patches, training_set_size)
+                if len(training_data) == 0:
+                    print "no more training data!"
+                    break
             print self
 
     def _adaboost_reweight(self, weighted_patches, t):
@@ -111,8 +114,9 @@ class StrongClassifier(object):
         norm_factor = 0
         for patch, w in weighted_sample_pool:
             response = self.h_t(patch, t)
-            if response < theta_a or response > theta_b:  # throw it away
-                continue
+            if t > 3:
+                if response < theta_a or response > theta_b:  # throw it away
+                    continue
             r = wc.classify(patch)
             label = patch.label
             new_weight = w * np.exp(-label * r)
@@ -137,10 +141,12 @@ class StrongClassifier(object):
         for patch, w in weighted_patches:  # TODO speedup
             if patch.label == +1:
                 pos_weighted_patches.append([patch, w])
-                pos.append(self.h_t(patch, t))
+                ghjk = self.h_t(patch, t)
+                pos.append(ghjk)
             elif patch.label == -1:
                 neg_weighted_patches.append([patch, w])
-                neg.append(self.h_t(patch, t))
+                kjhgf = self.h_t(patch, t)
+                neg.append(kjhgf)
 
         # Compute Cumulative conditional probabilities of classes
         # compute gaussians for negative and positive classes
@@ -161,30 +167,20 @@ class StrongClassifier(object):
         :param t: layer number
         """
         index = 0
-        r_a_theta = []
-        for theta_a_candidate in np.linspace(-2, 2, num=1000):
-            r_a = neg_gaussian[index] / pos_gaussian[index]
-            r_a_theta.append([theta_a_candidate, r_a])
-
-            if neg_gaussian[index] < theta_a_candidate and pos_gaussian[index] < theta_a_candidate:
-                if r_a > self.A and self.classifiers[t].theta_a == -maxint:
-                    self.classifiers[t].theta_a = theta_a_candidate
-            index += 1
-        index = 0
-        r_b_theta = []
-        for theta_b_candidate in np.linspace(2, -2, num=1000):  # from right to left
-            r_b = neg_gaussian[index] / pos_gaussian[index]
-            r_b_theta.append([theta_b_candidate, r_b])
-
-            if neg_gaussian[index] > theta_b_candidate and pos_gaussian[index] > theta_b_candidate:
-                if r_b < self.B and self.classifiers[t].theta_b == +maxint:
-                    self.classifiers[t].theta_b = theta_b_candidate
+        r = []
+        for theta_candidate in np.linspace(min(pos_gaussian), max(pos_gaussian), num=1000):
+            rat = neg_gaussian[index] / pos_gaussian[index]
+            r.append([theta_candidate, rat])
+            if rat > self.A and self.classifiers[t].theta_a == -maxint:
+                self.classifiers[t].theta_a = theta_candidate
+            if rat < self.B and self.classifiers[t].theta_b == +maxint:
+                self.classifiers[t].theta_b = theta_candidate
             index += 1
         print self
         #assert self.classifiers[t].theta_a != -maxint
         #assert self.classifiers[t].theta_b != +maxint
         #assert self.classifiers[t].theta_a < self.classifiers[t].theta_b
-        plot_ratios(r_a_theta, r_b_theta, self.classifiers[t].theta_a, self.classifiers[t].theta_b)
+        plot_ratios(r, self.classifiers[t].theta_a, self.classifiers[t].theta_b)
 
     def _fetch_best_weak_classifier(self, weighted_patches):
         """ Returns the weak classifier that produces the least error for a given training set

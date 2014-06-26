@@ -101,35 +101,33 @@ def plot_gaussians(neg_ratios, pos_ratios, sigma, h):
     plt.show()
 
 
-def plot_ratios(pos, neg, theta_a, theta_b):
-    cand_neg = []
-    cand_pos = []
-    ratio_neg = []
-    ratio_pos = []
-    for cand, ratio in neg:
-        cand_neg = np.append(cand_neg, cand)
-        ratio_neg = np.append(ratio_neg, ratio)
-    for cand, ratio in pos:
-        cand_pos = np.append(cand_pos, cand)
-        ratio_pos = np.append(ratio_pos, ratio)
+def plot_ratios(r, theta_a, theta_b):
+    candi = []
+    ratioi = []
+    for cand, ratio in r:
+        candi = np.append(candi, cand)
+        ratioi = np.append(ratioi, ratio)
 
     if -5 < theta_a < 5:  # theta_a sanity check
         plt.axvline(x=theta_a, linewidth=1, ls='dashed', color='black', label='theta a')
     if -5 < theta_b < 5:  # theta_a sanity check
         plt.axvline(x=theta_b, linewidth=1, ls='dashed', color='black', label='theta b')
 
-    plt.plot(cand_pos, ratio_pos, linewidth=3, alpha=0.5, color='blue', label='Positive threshold search')
-    plt.plot(cand_neg, ratio_neg, linewidth=3, alpha=0.5, color='red', label='Negative Threshold search')
+    plt.plot(candi, ratioi, linewidth=3, alpha=0.5, color='blue', label='Likelihood ratio')
     plt.legend()
     plt.show()
 
 def plot_wc(wc):
     pos = wc.annotated_responses[wc.annotated_responses[:, 1] == +1]
     neg = wc.annotated_responses[wc.annotated_responses[:, 1] == -1]
-    smaller_pos = len(pos[pos[:, 0] < wc.threshold])
-    bigger_pos = len(pos[pos[:, 0] > wc.threshold])
-    smaller_neg = len(neg[neg[:, 0] < wc.threshold])
-    bigger_neg = len(neg[neg[:, 0] > wc.threshold])
+    smaller_pos = pos[pos[:, 0] < wc.threshold]
+    smaller_pos_w = np.sum(smaller_pos[:, 2])
+    bigger_pos = pos[pos[:, 0] > wc.threshold]
+    bigger_pos_w = np.sum(bigger_pos[:, 2])
+    smaller_neg = neg[neg[:, 0] < wc.threshold]
+    smaller_neg_w = np.sum(smaller_neg[:, 2])
+    bigger_neg = neg[neg[:, 0] > wc.threshold]
+    bigger_neg_w = np.sum(bigger_neg[:, 2])
     weights_pos = pos[:, 2]
     weights_neg = neg[:, 2]
     y_p = [0] * len(pos)
@@ -137,5 +135,5 @@ def plot_wc(wc):
     p = plt.scatter(pos[:, 0], y_p, weights_pos * len(y_p + y_n) * 40, 'b')
     n = plt.scatter(neg[:, 0], y_n, weights_neg * len(y_p + y_n) * 40, 'r')
     plt.errorbar(wc.threshold, 0, yerr=0.5, linestyle="dashed", marker="None", color="green")
-    plt.legend([p, n], ["{" + str(smaller_pos) + " < [threshold] < " + str(bigger_pos) + " }", "{" + str(smaller_neg) + " < [threshold] < " + str(bigger_neg) + "}"])
+    plt.legend([p, n], ["{" + str(smaller_pos_w) + " < [threshold] < " + str(bigger_pos_w) + " }", "{" + str(smaller_neg_w) + " < [threshold] < " + str(bigger_neg_w) + "}"])
     plt.show()
