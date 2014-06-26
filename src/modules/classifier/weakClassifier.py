@@ -97,7 +97,10 @@ class WeakClassifier(object):
                 self.error = err
                 self.threshold = thr
         self._eval_confidences()
-        self._eval_Z(misclassified)
+
+        misclassified_left = left[left[:, 0] > thr]
+        misclassified_right = right[right[:, 0] < thr]
+        self._eval_Z(misclassified=sum(misclassified_left[:, 2]) + sum(misclassified_right[:, 2]))
 
     def _eval_Z(self, misclassified):
         self.z = 2. * np.sqrt(misclassified * (1. - misclassified))

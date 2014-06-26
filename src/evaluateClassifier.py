@@ -1,8 +1,9 @@
 from modules.detector.frameFeed import FrameFeed
 from modules.detector.detector import Detector
 from modules.util.serializer import *
+# from modules.classifier.frameStream import *
 
-vidPaths = ['../dataset/videos/GOPR0809_start_0_27_end_1_55.mp4']
+vidPaths = ['../../../dataset/videos/GOPR0809_start_0_27_end_1_55.mp4']
 
 
 if __name__ == '__main__':
@@ -13,6 +14,7 @@ if __name__ == '__main__':
         print "No saved classifiers found. Train one and output it to file"
     else:
         classifier = deserialize(pickles[-1])
+        # VideoFileIS(vidPaths[-1])
         frame_feed = FrameFeed(vidPaths[-1])
 
         detector = Detector(classifier, frame_feed)
