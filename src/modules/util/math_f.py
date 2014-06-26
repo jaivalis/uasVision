@@ -115,3 +115,21 @@ def plot_ratios(neg, pos, theta_b, theta_a):
     plt.plot(cand_pos, ratio_pos, linewidth=3, alpha=0.5, color='blue', label='pos. Threshold search')
     plt.plot(cand_neg, ratio_neg, linewidth=3, alpha=0.5, color='red', label='neg. Threshold search')
     plt.show()
+
+
+def plot_wc(wc):
+    pos = wc.annotated_responses[wc.annotated_responses[:, 1] == +1]
+    neg = wc.annotated_responses[wc.annotated_responses[:, 1] == -1]
+    smaller_pos = len(pos[pos[:, 0] < wc.threshold])
+    bigger_pos = len(pos[pos[:, 0] > wc.threshold])
+    smaller_neg = len(neg[neg[:, 0] < wc.threshold])
+    bigger_neg = len(neg[neg[:, 0] > wc.threshold])
+    weights_pos = pos[:, 2]
+    weights_neg = neg[:, 2]
+    y_p = [0] * len(pos)
+    y_n = [0] * len(neg)
+    p = plt.scatter(pos[:, 0], y_p, weights_pos * len(y_p + y_n) * 40, 'b')
+    n = plt.scatter(neg[:, 0], y_n, weights_neg * len(y_p + y_n) * 40, 'r')
+    plt.errorbar(wc.threshold, 0, yerr=0.5, linestyle="dashed", marker="None", color="green")
+    plt.legend([p, n], ["{" + str(smaller_pos) + " < [threshold] < " + str(bigger_pos) + " }", "{" + str(smaller_neg) + " < [threshold] < " + str(bigger_neg) + "}"])
+    plt.show()
