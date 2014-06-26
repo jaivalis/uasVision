@@ -1,6 +1,6 @@
 from modules.classifier.trainingStream import TrainingStream
 from modules.classifier.feature_extractors.haar import HaarHolder
-from modules.classifier.classifier import StrongClassifier
+from modules.classifier.classifier import *
 from modules.util.serializer import *
 
 vidPaths = ['../dataset/videos/GOPR0809_start_0_27_end_1_55.mp4']
@@ -16,10 +16,7 @@ if __name__ == '__main__':
     beta = 0.1
     gamma = .8
 
-    # get_pickles()
-    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, layers=20, sample_count=500, algorithm='wald')
+    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, layers=2, sample_count=500, algorithm='wald')
+    pck_classifier = MinimalStrongClassifier(classifier)
 
-    # for p in patches:
-    #     # if p.label == -1:
-    #     p.imshow()
-    #     h.update_patch_haar(p)
+    serialize(pck_classifier)

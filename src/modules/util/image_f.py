@@ -41,6 +41,10 @@ def get_random_patch(img, size, frame_id):
     return Patch(crop, frame_id, (xmin, ymin, xmax, ymax), -1)
 
 
+def rgb2gray(rgb):
+        return np.dot(rgb[..., :3], [0.299, 0.587, 0.144])
+
+
 def overlap(positives, patch):
     ret = False
     for p in positives:

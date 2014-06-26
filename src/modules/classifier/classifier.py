@@ -20,6 +20,7 @@ class StrongClassifier(object):
         self.B = beta / (1. - alpha)
         self.gamma = gamma
         self.layers = layers
+        self.sample_count = sample_count
         self.all_classifiers = []  # len(classifiers) = T
         if algorithm not in ['adaboost', 'wald']:
             raise ValueError('Unsupported learning algorithm')
@@ -58,7 +59,7 @@ class StrongClassifier(object):
         elif self.algorithm == 'wald':    # Sample training_set_size samples
             training_data = random_sample_weighted_patches(weighted_patches, training_set_size)
 
-        for t in range(self.layers+1):  # choose the weak classifier with the minimum error
+        for t in range(self.layers):  # choose the weak classifier with the minimum error
             print "Learn with bootstrapping using %s, layer #%d" % (self.algorithm.title(), t+1)
 
             if self.algorithm == 'adaboost':
@@ -252,10 +253,59 @@ class StrongClassifier(object):
             cl += 1
         return ret + "}"
 
-    @staticmethod
-    def get_id():
+
+class MinimalStrongClassifier(object):
+    def __init__(self, strong_classifier):
+        self.A = strong_classifier.A
+        self.B = strong_classifier.B
+        self.gamma = strong_classifier.gamma
+        self.layers = strong_classifier.layers
+        self.sample_count = strong_classifier.sample_count
+        self.all_classifiers = []  # len(classifiers) = T
+        self.algorithm = strong_classifier.algorithm
+
+        self.classifiers = strong_classifier.classifiers
+
+    def h_t(self, x, t):
+        """ H_t(x) returns the summation of the responses of the first t weak classifiers.
+        :param t: Layer count
+        :param x: Patch to be classified
+        :return: H_t(x)
+        """
+        ret = 0
+        strong_classifier = self.classifiers[0:t+1]
+        for wc in strong_classifier:
+            ret += wc.classify(x)
+        return ret
+
+    def classify(self, patch):
+        """ Implementation of Algorithm 1 Sochman.
+        :param patch: Patch to be classified
+        :return: +1, -1
+        """
+        if self.algorithm == 'adaboost':
+            ret = 0
+            for t in range(0, len(self.classifiers)):
+                wc = self.classifiers[t]
+                a = wc.alpha
+                ret += wc.classify(patch) * a
+            return np.sign(ret)
+        elif self.algorithm == 'wald':
+            for t in range(0, len(self.classifiers)):
+                h_ = self.h_t(patch, t)
+                wc = self.classifiers[t]
+                if h_ >= wc.theta_b:
+                    return +1
+                if h_ <= wc.theta_a:
+                    return -1
+            if self.h_t(patch, self.layers) > self.gamma:
+                return +1
+            else:
+                return -1
+
+    def get_id(self):
         """ Used by cPickle to serialize/de-serialize
         :rtype : basestring
         :return: A unique identifier
         """
-        return ""
+        return "%s_%.2f_%f.2_%f.1_%d_%d" % (self.algorithm, self.A, self.B, self.gamma, self.layers, self.sample_count)

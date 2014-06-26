@@ -1,5 +1,5 @@
 from abc import abstractmethod
-
+from modules.util.image_f import *
 import numpy as np
 import cv2
 
@@ -10,7 +10,7 @@ class InputStream(object):
     def getRGBImage(self, frame):
         raise
 
-    def showVideo(self):
+    def show_video(self):
         frameNo = 0
         ret, image = self.video.read()
         while ret:
@@ -32,28 +32,26 @@ class VideoFileIS(InputStream):
         try:
             self.video = cv2.VideoCapture(path)
             self.length = self.video.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT)
+            print "Opened %s training video file, containing %d frames" % (self.path, self.length)
         except:
             print "Could not open video file"
             raise
 
-    def rgb2gray(self, rgb):
-        return np.dot(rgb[..., :3], [0.299, 0.587, 0.144])
-
     def getRGBImage(self, frame):
         self.video.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, frame)
         ret, image = self.video.read()
-        return self.rgb2gray(image)
+        return rgb2gray(image)
 
     def get_grayscale_img(self, frame):
         self.video.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, frame)
         ret, image = self.video.read()
         image = np.array(image, dtype='int64')
-        return self.rgb2gray(image)
+        return rgb2gray(image)
 
     def getNextRGBImage(self):
         ret, image = self.video.read()
         self.frame_id += 1
-        return self.rgb2gray(image)
+        return rgb2gray(image)
 
     def imshow(self, frame, annotations):
         """
