@@ -86,16 +86,16 @@ class WeakClassifier(object):
             thr = t + .5
             if thr > max(response_values):
                 continue
+
             misclassified_left = left[left[:, 0] > thr]
             misclassified_right = right[right[:, 0] < thr]
-
             misclassified = sum(misclassified_left[:, 2]) + sum(misclassified_right[:, 2])
-
             err = misclassified / sum(self.annotated_responses[:, 2])
 
             if err < self.error:
                 self.error = err
                 self.threshold = thr
+
         self._eval_confidences()
 
         misclassified_left = left[left[:, 0] > self.threshold]
