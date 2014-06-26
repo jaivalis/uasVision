@@ -1,6 +1,7 @@
 from modules.classifier.weakClassifier import WeakClassifier
 from modules.util.math_f import *
 from modules.util.datastructures_f import *
+from sys import maxint
 import copy
 
 
@@ -160,29 +161,30 @@ class StrongClassifier(object):
         :param t: layer number
         """
         index = 0
-        threshold_found = 0
         r_a_theta = []
-        for theta_a_candidate in np.linspace(-1, 1, num=1000):
+        for theta_a_candidate in np.linspace(-2, 2, num=1000):
+            r_a = neg_gaussian[index] / pos_gaussian[index]
+            r_a_theta.append([theta_a_candidate, r_a])
+
             if neg_gaussian[index] < theta_a_candidate and pos_gaussian[index] < theta_a_candidate:
-                r_a = neg_gaussian[index] / pos_gaussian[index]
-                r_a_theta.append([theta_a_candidate, r_a])
-                if r_a > self.A and threshold_found == 0:
+                if r_a > self.A and self.classifiers[t].theta_a == -maxint:
                     self.classifiers[t].theta_a = theta_a_candidate
-                    threshold_found = 1
             index += 1
-        lin_space = np.linspace(1, -1, num=1000)  # from right to left
         index = 0
-        threshold_found = 0
         r_b_theta = []
-        for theta_b_candidate in lin_space:
+        for theta_b_candidate in np.linspace(2, -2, num=1000):  # from right to left
+            r_b = neg_gaussian[index] / pos_gaussian[index]
+            r_b_theta.append([theta_b_candidate, r_b])
+
             if neg_gaussian[index] > theta_b_candidate and pos_gaussian[index] > theta_b_candidate:
-                r_b = neg_gaussian[index] / pos_gaussian[index]
-                r_b_theta.append([theta_b_candidate, r_b])
-                if r_b < self.B and threshold_found == 0:
+                if r_b < self.B and self.classifiers[t].theta_b == +maxint:
                     self.classifiers[t].theta_b = theta_b_candidate
-                    threshold_found = 1
             index += 1
-        plot_ratios(r_b_theta, r_a_theta, self.classifiers[t].theta_b, self.classifiers[t].theta_a)
+        print self
+        assert self.classifiers[t].theta_a != -maxint
+        assert self.classifiers[t].theta_b != +maxint
+        assert self.classifiers[t].theta_a < self.classifiers[t].theta_b
+        plot_ratios(r_a_theta, r_b_theta, self.classifiers[t].theta_a, self.classifiers[t].theta_b)
 
     def _fetch_best_weak_classifier(self, weighted_patches):
         """ Returns the weak classifier that produces the least error for a given training set
@@ -243,10 +245,10 @@ class StrongClassifier(object):
                 return -1
 
     def __str__(self):
-        ret = "%s Strong classifier {\n" % self.algorithm.title()
+        ret = "%s Strong classifier A:%.2f, B:%.2f {\n" % (self.algorithm.title(), self.A, self.B)
         cl = 1
         for wc in self.classifiers:
-            ret += "\tWeak classifier #" + str(cl) + ":\n\t\t" + str(wc) + "\n"
+            ret += "\tWeak classifier #%s:\n\t\t%s\n" % (cl, wc)
             cl += 1
         return ret + "}"
 

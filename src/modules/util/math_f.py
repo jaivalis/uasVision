@@ -101,7 +101,7 @@ def plot_gaussians(neg_ratios, pos_ratios, sigma, h):
     plt.show()
 
 
-def plot_ratios(neg, pos, theta_b, theta_a):
+def plot_ratios(pos, neg, theta_a, theta_b):
     cand_neg = []
     cand_pos = []
     ratio_neg = []
@@ -112,10 +112,16 @@ def plot_ratios(neg, pos, theta_b, theta_a):
     for cand, ratio in pos:
         cand_pos = np.append(cand_pos, cand)
         ratio_pos = np.append(ratio_pos, ratio)
-    plt.plot(cand_pos, ratio_pos, linewidth=3, alpha=0.5, color='blue', label='pos. Threshold search')
-    plt.plot(cand_neg, ratio_neg, linewidth=3, alpha=0.5, color='red', label='neg. Threshold search')
-    plt.show()
 
+    if -5 < theta_a < 5:  # theta_a sanity check
+        plt.axvline(x=theta_a, linewidth=1, ls='dashed', color='black', label='theta a')
+    if -5 < theta_b < 5:  # theta_a sanity check
+        plt.axvline(x=theta_b, linewidth=1, ls='dashed', color='black', label='theta b')
+
+    plt.plot(cand_pos, ratio_pos, linewidth=3, alpha=0.5, color='blue', label='Positive threshold search')
+    plt.plot(cand_neg, ratio_neg, linewidth=3, alpha=0.5, color='red', label='Negative Threshold search')
+    plt.legend()
+    plt.show()
 
 def plot_wc(wc):
     pos = wc.annotated_responses[wc.annotated_responses[:, 1] == +1]

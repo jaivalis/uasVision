@@ -2,6 +2,7 @@ import random
 
 
 def random_sample_weighted_patches(lst, sample_count):
+    # TODO assert that the sampling is feasible raise exception otherwise fucking idiot
     """ Returns a random subsample of arr of size 'sample_count' containing both positive and negative samples
     :param lst: List containing [patch, weight]
     :param sample_count: Size of returned dictionary
