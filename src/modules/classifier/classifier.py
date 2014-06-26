@@ -82,10 +82,7 @@ class StrongClassifier(object):
                 training_data = random_sample_weighted_patches(weighted_patches, training_set_size)
             print self
 
-
     def _adaboost_reweight(self, weighted_patches, t):
-        if self.algorithm != 'adaboost':
-            raise ValueError('Wrong algorithm for reweighing')
         ret = []
         wc = self.classifiers[t]
         z_t = wc.z
@@ -111,7 +108,6 @@ class StrongClassifier(object):
         theta_b = wc.theta_b
 
         norm_factor = 0
-
         for patch, w in weighted_sample_pool:
             response = self.h_t(patch, t)
             if response < theta_a or response > theta_b:  # throw it away

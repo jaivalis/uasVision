@@ -10,8 +10,6 @@ class WeakClassifier(object):
         # used to calculate the standard deviation
         self.annotated_responses = None
         self.threshold = None
-        # The sign of the dominant class left of the threshold
-        self.dominant_left = None
 
         self.theta_a = -maxint
         self.theta_b = maxint
@@ -33,11 +31,8 @@ class WeakClassifier(object):
             return self.conf_right
 
     def train(self, weighted_patches):
-        """ Given a training set T, finds the threshold that produces the lowest error and updates the error value of
-        the classifier.
-        :param weighted_patches: Weighted training set
-        """
-        for p, w in weighted_patches:
+
+        for p, w in weighted_patches:   # Evaluate responses for all patches
             response = self.feature.apply(p.crop)
             true_label = p.label
             # append to the responses
@@ -47,60 +42,29 @@ class WeakClassifier(object):
                 self.annotated_responses = np.vstack((self.annotated_responses, [response, true_label, w]))
 
         response_values = self.annotated_responses[:, 0]
-        pos_response_values = self.annotated_responses[self.annotated_responses[:, 1] == +1]
-        neg_response_values = self.annotated_responses[self.annotated_responses[:, 1] == -1]
+        pos = self.annotated_responses[self.annotated_responses[:, 1] == +1]
+        neg = self.annotated_responses[self.annotated_responses[:, 1] == -1]
+        summed_weights = sum(self.annotated_responses[:, 2])
 
-        # find which class occupies the left and which the right portion of the responses
-        median = np.median(response_values) + 0.5
-
-        weight_pos_left = 0
-        weight_pos_right = 0
-        weight_neg_left = 0
-        weight_neg_right = 0
-        weight_total_pos = weight_total_neg = 0
-        for [response, true_label, w] in self.annotated_responses:
-            if true_label == +1:
-                weight_total_pos += w
-                if response < median:
-                    weight_pos_left += w
-                else:
-                    weight_pos_right += w
-            elif true_label == -1:
-                weight_total_neg += w
-                if response < median:
-                    weight_neg_left += w
-                else:
-                    weight_neg_right += w
-        left_pos_concentration = weight_pos_left / weight_total_pos
-        left_neg_concentration = weight_neg_left / weight_total_neg
-        if left_neg_concentration > left_pos_concentration:
-            self.dominant_left = -1
-            left = neg_response_values
-            right = pos_response_values
-        else:
-            self.dominant_left = +1
-            left = pos_response_values
-            right = neg_response_values
-
+        best_ratio = 0.0
         for t in response_values:
             thr = t + .5
-            if thr > max(response_values):
-                continue
 
-            misclassified_left = left[left[:, 0] > thr]
-            misclassified_right = right[right[:, 0] < thr]
-            misclassified = sum(misclassified_left[:, 2]) + sum(misclassified_right[:, 2])
-            err = misclassified / sum(self.annotated_responses[:, 2])
+            pos_above_threshold = sum(pos[pos[:, 0] > thr][:, 2]) / summed_weights  # responses
+            pos_below_threshold = sum(pos[pos[:, 0] < thr][:, 2]) / summed_weights  # responses
 
-            if err < self.error:
-                self.error = err
+            neg_above_threshold = sum(neg[neg[:, 0] > thr][:, 2]) / summed_weights  # responses
+            neg_below_threshold = sum(neg[neg[:, 0] < thr][:, 2]) / summed_weights  # responses
+
+            ratio1 = pos_above_threshold + neg_below_threshold  # sum of weights
+            ratio2 = pos_below_threshold + neg_above_threshold  # sum of weights
+
+            if ratio1 > best_ratio or ratio2 > best_ratio:
+                best_ratio = max(ratio1, ratio2)
                 self.threshold = thr
-
+                self.error = 1 - best_ratio
         self._eval_confidences()
-
-        misclassified_left = left[left[:, 0] > self.threshold]
-        misclassified_right = right[right[:, 0] < self.threshold]
-        self._eval_Z(sum(misclassified_left[:, 2]) + sum(misclassified_right[:, 2]))
+        self._eval_Z(self.error)
 
     def _eval_Z(self, misclassified_weight):
         """ Evaluates self.z, weight normalizing factor used by Adaboost.
@@ -156,5 +120,5 @@ class WeakClassifier(object):
             theta_b = +999
         if alpha is None:
             alpha = -999
-        return "Feature: {%s} threshold: %.4f, dominant_left: %d, error: %.2f, alpha: %.2f, theta_a: %.2f, theta_b: " \
-               "%.2f" % (self.feature, self.threshold, self.dominant_left, self.error, alpha, theta_a, theta_b)
+        return "Feature: {%s} threshold: %.1f, error: %.2f, alpha: %.2f, theta_a: %.2f, theta_b: " \
+               "%.2f" % (self.feature, self.threshold, self.error, alpha, theta_a, theta_b)
