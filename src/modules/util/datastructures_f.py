@@ -12,10 +12,20 @@ def random_sample_weighted_patches(lst, sample_count):
     ret = []
     indexes = range(len(lst))
     random.shuffle(indexes)
+
     pos_count = 0
     neg_count = 0
+    for patch, w in lst:
+        if patch.label == +1:
+            pos_count += 1
+        if patch.label == -1:
+            neg_count += 1
+    # assert there are enough pos and negs to sample from
+    assert pos_count > .4 * len(ret) and neg_count > .4 * len(ret)
 
     i = 0
+    pos_count = 0
+    neg_count = 0
     while i < len(indexes):
         if lst[i][0].label == +1:
             pos_count += 1

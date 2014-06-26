@@ -1,5 +1,5 @@
 import numpy as np
-from modules.util.math_f import pdf_gaussian, plot_gaussians
+from modules.util.math_f import pdf_gaussian, plot_gaussians, plot_wc
 from sys import maxint
 
 
@@ -26,9 +26,9 @@ class WeakClassifier(object):
         """
         response = self.feature.apply(patch.crop)
         if response < self.threshold:
-            return self.conf_left
+            return -1
         else:
-            return self.conf_right
+            return +1
 
     def train(self, weighted_patches):
         self.annotated_responses = None  # clear the previous training samples
@@ -131,5 +131,6 @@ class WeakClassifier(object):
             theta_b = +999
         if alpha is None:
             alpha = -999
+        plot_wc(self)
         return "Feature: {%s} threshold: %.1f, error: %.2f, alpha: %.2f, theta_a: %.2f, theta_b: %.2f\n\t\t%s" % \
                (self.feature, self.threshold, self.error, alpha, theta_a, theta_b, self.get_classifications_string())

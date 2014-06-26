@@ -181,9 +181,9 @@ class StrongClassifier(object):
                     self.classifiers[t].theta_b = theta_b_candidate
             index += 1
         print self
-        assert self.classifiers[t].theta_a != -maxint
-        assert self.classifiers[t].theta_b != +maxint
-        assert self.classifiers[t].theta_a < self.classifiers[t].theta_b
+        #assert self.classifiers[t].theta_a != -maxint
+        #assert self.classifiers[t].theta_b != +maxint
+        #assert self.classifiers[t].theta_a < self.classifiers[t].theta_b
         plot_ratios(r_a_theta, r_b_theta, self.classifiers[t].theta_a, self.classifiers[t].theta_b)
 
     def _fetch_best_weak_classifier(self, weighted_patches):
