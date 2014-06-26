@@ -117,11 +117,12 @@ def plot_ratios(r, theta_a, theta_b):
     plt.legend()
     plt.show()
 
+
 def plot_wc(wc):
     pos = wc.annotated_responses[wc.annotated_responses[:, 1] == +1]
     neg = wc.annotated_responses[wc.annotated_responses[:, 1] == -1]
-    smaller_pos = pos[pos[:, 0] < wc.threshold]
-    smaller_pos_w = np.sum(smaller_pos[:, 2])
+    # smaller_pos = pos[pos[:, 0] < wc.threshold]
+    # smaller_pos_w = np.sum(smaller_pos[:, 2])
     bigger_pos = pos[pos[:, 0] > wc.threshold]
     bigger_pos_w = np.sum(bigger_pos[:, 2])
     smaller_neg = neg[neg[:, 0] < wc.threshold]
@@ -132,8 +133,10 @@ def plot_wc(wc):
     weights_neg = neg[:, 2]
     y_p = [0] * len(pos)
     y_n = [0] * len(neg)
-    p = plt.scatter(pos[:, 0], y_p, weights_pos * len(y_p + y_n) * 40, 'b')
+    p = plt.scatter(pos[:, 0], y_p, weights_pos * len(y_p + y_n) * 40, 'b', label='')
     n = plt.scatter(neg[:, 0], y_n, weights_neg * len(y_p + y_n) * 40, 'r')
     plt.errorbar(wc.threshold, 0, yerr=0.5, linestyle="dashed", marker="None", color="green")
-    plt.legend([p, n], ["{" + str(smaller_pos_w) + " < [threshold] < " + str(bigger_pos_w) + " }", "{" + str(smaller_neg_w) + " < [threshold] < " + str(bigger_neg_w) + "}"])
+    legend_str1 = "{%.2f < threshold < %.2f" % (smaller_neg_w, bigger_pos_w)
+    legend_str2 = "{%.2f < threshold < %.2f" % (smaller_neg_w, bigger_neg_w)
+    plt.legend([p, n], [legend_str1, legend_str2])
     plt.show()
