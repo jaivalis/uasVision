@@ -31,8 +31,8 @@ class WeakClassifier(object):
             return self.conf_right
 
     def train(self, weighted_patches):
-
-        for p, w in weighted_patches:   # Evaluate responses for all patches
+        self.annotated_responses = None  # clear the previous training samples
+        for p, w in weighted_patches:  # Evaluate responses for all patches
             response = self.feature.apply(p.crop)
             true_label = p.label
             # append to the responses
@@ -66,6 +66,17 @@ class WeakClassifier(object):
         self._eval_confidences()
         self._eval_Z(self.error)
 
+    def get_classifications_string(self):  # used for debugging
+        pos = self.annotated_responses[self.annotated_responses[:, 1] == +1]
+        neg = self.annotated_responses[self.annotated_responses[:, 1] == -1]
+
+        smaller_pos = len(pos[pos[:, 0] < self.threshold])
+        bigger_pos = len(pos[pos[:, 0] > self.threshold])
+        smaller_neg = len(neg[neg[:, 0] < self.threshold])
+        bigger_neg = len(neg[neg[:, 0] > self.threshold])
+        return "+{ %d < [threshold] < %d } | -{ %d < [threshold] < %d }" \
+               % (smaller_pos, bigger_pos, smaller_neg, bigger_neg)
+
     def _eval_Z(self, misclassified_weight):
         """ Evaluates self.z, weight normalizing factor used by Adaboost.
         :param misclassified_weight: Weights of misclassified patches
@@ -82,8 +93,8 @@ class WeakClassifier(object):
         pos_right = len(positives[positives[:, 0] > self.threshold])
         all_right = len(self.annotated_responses[self.annotated_responses[:, 0] > self.threshold])
 
-        self.conf_left = .5 * np.log((pos_left + epsilon)/(all_left + epsilon))
-        self.conf_right = .5 * np.log((pos_right + epsilon)/(all_right + epsilon))
+        self.conf_left = .5 * np.log((pos_left + epsilon) / (all_left + epsilon))
+        self.conf_right = .5 * np.log((pos_right + epsilon) / (all_right + epsilon))
 
     def update_alpha(self, weighted_patches):
         """ Used by Adaboost to update the weight of the classifier """
@@ -97,7 +108,7 @@ class WeakClassifier(object):
         """ Plots the mixture of Gaussians split into two classes (+, -) """
         sigma = np.std(self.annotated_responses)
         n = len(self.annotated_responses)
-        h = 1.144 * sigma * n ** (-1/5)
+        h = 1.144 * sigma * n ** (-1 / 5)
         plot_gaussians(self.annotated_responses, sigma, h)
 
     def visualize(self, patch):
@@ -120,5 +131,5 @@ class WeakClassifier(object):
             theta_b = +999
         if alpha is None:
             alpha = -999
-        return "Feature: {%s} threshold: %.1f, error: %.2f, alpha: %.2f, theta_a: %.2f, theta_b: " \
-               "%.2f" % (self.feature, self.threshold, self.error, alpha, theta_a, theta_b)
+        return "Feature: {%s} threshold: %.1f, error: %.2f, alpha: %.2f, theta_a: %.2f, theta_b: %.2f\n\t\t%s" % \
+               (self.feature, self.threshold, self.error, alpha, theta_a, theta_b, self.get_classifications_string())

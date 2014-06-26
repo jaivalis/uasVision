@@ -32,4 +32,5 @@ def random_sample_weighted_patches(lst, sample_count):
                 pos_count = 0
                 neg_count = 0
                 random.shuffle(indexes)
+    print "Sampling of %d samples [DONE]" % sample_count
     return ret
