@@ -1,47 +1,51 @@
 import random
 
 
-def random_sample_weighted_patches(lst, sample_count):
-    # TODO assert that the sampling is feasible raise exception otherwise fucking idiot
+def split_weighted_patches(weighted_patches):
+    pos = []
+    neg = []
+    for patch, w in weighted_patches:
+        if patch.label == +1:
+            pos.append([patch, w])
+        elif patch.label == -1:
+            neg.append([patch, w])
+    return pos, neg
+
+
+def random_sample_weighted_patches(weighted_patches, sample_count):
     """ Returns a random subsample of arr of size 'sample_count' containing both positive and negative samples
-    :param lst: List containing [patch, weight]
+    :param weighted_patches: List containing [patch, weight]
     :param sample_count: Size of returned dictionary
     :return: a random subsample of d of size 'sample_count'
     """
-    sample_count = min(sample_count, len(lst))
+    pos, neg = split_weighted_patches(weighted_patches)
+    pos_count = len(pos)
+    neg_count = len(neg)
+    sample_count = min(sample_count, len(weighted_patches), 2*pos_count, 2*neg_count)
+    if neg_count == pos_count == 0:
+        print "Weighted patches is empty, cannot be sampled from."
+        return []
+    if pos_count == 0:
+        print "Weighted patches do not contain any negative examples, cannot be sampled from."
+        return []
+    if neg_count == 0:
+        print "Weighted patches do not contain any positive examples, cannot be sampled from."
+        return []
+    print "Sampling %d samples out of sample pool of size %d " % (sample_count, len(weighted_patches)),
     ret = []
-    indexes = range(len(lst))
-    random.shuffle(indexes)
 
-    pos_count = 0
-    neg_count = 0
-    for patch, w in lst:
-        if patch.label == +1:
-            pos_count += 1
-        if patch.label == -1:
-            neg_count += 1
-    # assert there are enough pos and negs to sample from
-    assert pos_count > .4 * len(ret) and neg_count > .4 * len(ret)
-
-    i = 0
-    pos_count = 0
-    neg_count = 0
-    while i < len(indexes):
-        if lst[i][0].label == +1:
-            pos_count += 1
-        if lst[i][0].label == -1:
-            neg_count += 1
-
-        ret.append(lst[i])
-        i += 1
-        if len(ret) == sample_count:
-            if pos_count > .2 * len(ret) and neg_count > .2 * len(ret):
-                break
-            else:  # re-sample
-                ret = []
-                i = 0
-                pos_count = 0
-                neg_count = 0
-                random.shuffle(indexes)
-    print "Sampling of %d samples [DONE]" % sample_count
+    if sample_count == 2*pos_count:
+        ret.extend(pos)
+        random.shuffle(neg)
+        ret.extend(neg[0:pos_count])
+    elif sample_count == 2*neg_count:
+        ret.extend(pos)
+        random.shuffle(pos)
+        ret.extend(neg[0:neg_count])
+    else:
+        random.shuffle(pos)
+        random.shuffle(neg)
+        ret.extend(pos[0:sample_count/2])
+        ret.extend(neg[0:sample_count/2])
+    print "[DONE]"
     return ret

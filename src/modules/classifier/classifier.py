@@ -180,7 +180,6 @@ class StrongClassifier(object):
             if rat < self.B and self.classifiers[t].theta_b == +maxint:
                 self.classifiers[t].theta_b = theta_candidate
             index += 1
-        print self
         #assert self.classifiers[t].theta_a != -maxint
         #assert self.classifiers[t].theta_b != +maxint
         #assert self.classifiers[t].theta_a < self.classifiers[t].theta_b
