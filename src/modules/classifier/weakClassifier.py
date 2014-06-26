@@ -98,12 +98,15 @@ class WeakClassifier(object):
                 self.threshold = thr
         self._eval_confidences()
 
-        misclassified_left = left[left[:, 0] > thr]
-        misclassified_right = right[right[:, 0] < thr]
+        misclassified_left = left[left[:, 0] > self.threshold]
+        misclassified_right = right[right[:, 0] < self.threshold]
         self._eval_Z(misclassified=sum(misclassified_left[:, 2]) + sum(misclassified_right[:, 2]))
 
-    def _eval_Z(self, misclassified):
-        self.z = 2. * np.sqrt(misclassified * (1. - misclassified))
+    def _eval_Z(self, misclassified_weight):
+        """ Evaluates self.z, weight normalizing factor used by Adaboost.
+        :param misclassified_weight: Weights of misclassified patches
+        """
+        self.z = 2. * np.sqrt(misclassified_weight * (1. - misclassified_weight))
 
     def _eval_confidences(self):
         """ Updates the confidences of the classifier in order to avoid calculating them every time """
