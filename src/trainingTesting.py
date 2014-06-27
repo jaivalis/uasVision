@@ -16,7 +16,7 @@ if __name__ == '__main__':
     beta = 0.1
     gamma = .8
 
-    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, layers=5, sample_count=100, algorithm='wald')
+    classifier = StrongClassifier(ts, hh, alpha, beta, gamma, layers=200, sample_count=4500, algorithm='adaboost')
     pck_classifier = MinimalStrongClassifier(classifier)
 
     serialize(pck_classifier)

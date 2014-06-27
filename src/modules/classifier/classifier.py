@@ -35,7 +35,8 @@ class StrongClassifier(object):
         for feature in feature_holder.get_features():
             wc = WeakClassifier(feature)
             self.all_classifiers.append(wc)
-        self.all_classifiers = self.all_classifiers
+        # self.all_classifiers = self.all_classifiers[-50:len(self.all_classifiers)]  # TODO remove this, testing
+
         print "Initialized %d weak classifiers." % (len(self.all_classifiers))
 
         # Phase2: Algorithm2: Learning with bootstrapping
@@ -76,9 +77,9 @@ class StrongClassifier(object):
                 self.classifiers[-1].update_alpha(weighted_patches)
                 weighted_patches = self._adaboost_reweight(weighted_patches, t)
             elif self.algorithm == 'wald':
-                neg, pos = self._estimate_ratios(training_data, t)
+                kde_n, kde_p, xs_n, xs_p = self._estimate_ratios(training_data, t)
                 # find decision thresholds for the strong classifier
-                self._tune_thresholds(pos, neg, t)
+                self._tune_thresholds(kde_n, kde_p, xs_n, xs_p, t)
                 # throw away training samples that fall in our thresholds
                 weighted_patches = self._reweight_and_discard_irrelevant(weighted_patches, t)
                 # sample new training data
@@ -116,12 +117,14 @@ class StrongClassifier(object):
         theta_b = wc.theta_b
 
         norm_factor = 0
+        discarded = 0
         for patch, w in weighted_sample_pool:
             response = self.h_t(patch, t)
-            if t > 3:
-                if response < theta_a or response > theta_b:  # throw it away
-                    continue
-            r = wc.classify(patch)
+            # if t > 3:
+            # if response < theta_a or response > theta_b:  # throw it away
+            #     discarded += 1
+            #     continue
+            r = self.classify(patch)
             label = patch.label
             new_weight = w * np.exp(-label * r)
 
@@ -130,10 +133,12 @@ class StrongClassifier(object):
         for patch, w in tmp:  # normalize weights
             normalized_weight = w / norm_factor
             ret.append([patch, normalized_weight])
+        print "Discarded %d training samples" % discarded
         return ret
 
     def _estimate_ratios(self, weighted_patches, t):
         """
+        Returns the KDEs along with the linear spaces used for visualizing
         :param weighted_patches:
         :param t: layer number
         :return:
@@ -145,25 +150,22 @@ class StrongClassifier(object):
         for patch, w in weighted_patches:  # TODO speedup
             if patch.label == +1:
                 pos_weighted_patches.append([patch, w])
-                ghjk = self.h_t(patch, t)
-                pos.append(ghjk)
+                pos.append(self.h_t(patch, t))
             elif patch.label == -1:
                 neg_weighted_patches.append([patch, w])
-                kjhgf = self.h_t(patch, t)
-                neg.append(kjhgf)
+                neg.append(self.h_t(patch, t))
 
         # Compute Cumulative conditional probabilities of classes
         # compute gaussians for negative and positive classes
         all_patches = np.append(pos, neg)
         sigma = np.std(all_patches)
         h = 1.144 * sigma * len(all_patches) ** (-0.2)
-        lin_space = np.linspace(-1, 1, num=1000)
-        neg_sum_of_gaussians = sum_of_gaussians(neg, lin_space, h)
-        pos_sum_of_gaussians = sum_of_gaussians(pos, lin_space, h)
-        plot_gaussians(neg, pos, sigma, h)
-        return neg_sum_of_gaussians, pos_sum_of_gaussians
 
-    def _tune_thresholds(self, pos_gaussian, neg_gaussian, t):
+        kde_n, kde_p, xs_n, xs_p = get_two_kdes(pos, neg, h)
+        # plot_gaussians(neg, pos, sigma, h)  # TESTING
+        return kde_n, kde_p, xs_n, xs_p
+
+    def _tune_thresholds(self, kde_n, kde_p, xs_n, xs_p, t):
         """ Update the threshold of the weak classifier using this algorithm:
         http://personal.ee.surrey.ac.uk/Personal/Z.Kalal/Publications/2007_MSc_thesis.pdf pages 37, 38
         :param pos_gaussian: Sum of positive class gaussians
@@ -172,18 +174,28 @@ class StrongClassifier(object):
         """
         index = 0
         r = []
-        for theta_candidate in np.linspace(min(pos_gaussian), max(pos_gaussian), num=1000):
-            rat = neg_gaussian[index] / pos_gaussian[index]
+
+        best_ratio_a = 0
+        best_ratio_b = 0
+        for theta_candidate in np.linspace(min(min(xs_n), min(xs_p)), max(max(xs_n), max(xs_p)), 1000):
+            # if neg_gaussian[index] < .5 and pos_gaussian[index] < .5:
+            #     continue
+            rat = kde_n[index] / kde_p[index]
             r.append([theta_candidate, rat])
-            if rat > self.A and self.classifiers[t].theta_a == -maxint:
-                self.classifiers[t].theta_a = theta_candidate
-            if rat < self.B and self.classifiers[t].theta_b == +maxint:
-                self.classifiers[t].theta_b = theta_candidate
+            if rat > self.A:
+                if rat > best_ratio_a:
+                    best_ratio_a = rat
+                    self.classifiers[t].theta_a = theta_candidate
+            if rat < self.B:
+                # if and self.classifiers[t].theta_b == +maxint:
+                if rat > best_ratio_b:
+                    best_ratio_b = rat
+                    self.classifiers[t].theta_b = theta_candidate
             index += 1
-        #assert self.classifiers[t].theta_a != -maxint
-        #assert self.classifiers[t].theta_b != +maxint
-        #assert self.classifiers[t].theta_a < self.classifiers[t].theta_b
-        plot_ratios(r, self.classifiers[t].theta_a, self.classifiers[t].theta_b)
+        # assert self.classifiers[t].theta_a != -maxint
+        # assert self.classifiers[t].theta_b != +maxint
+        # assert self.classifiers[t].theta_a < self.classifiers[t].theta_b
+        # plot_ratios(r, self.classifiers[t].theta_a, self.classifiers[t].theta_b)
 
     def _fetch_best_weak_classifier(self, weighted_patches):
         """ Returns the weak classifier that produces the least error for a given training set
