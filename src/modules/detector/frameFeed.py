@@ -26,3 +26,6 @@ class FrameFeed(object):
 
         self.frame_id += 1
         return rgb2gray(image)
+
+    def __len__(self):
+        return self.length

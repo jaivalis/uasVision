@@ -162,7 +162,7 @@ class StrongClassifier(object):
         h = 1.144 * sigma * len(all_patches) ** (-0.2)
 
         kde_n, kde_p, xs_n, xs_p = get_two_kdes(pos, neg, h)
-        # plot_gaussians(neg, pos, sigma, h)  # TESTING
+        plot_gaussians(neg, pos, sigma, h)  # TESTING
         return kde_n, kde_p, xs_n, xs_p
 
     def _tune_thresholds(self, kde_n, kde_p, xs_n, xs_p, t):
@@ -182,11 +182,11 @@ class StrongClassifier(object):
             #     continue
             rat = kde_n[index] / kde_p[index]
             r.append([theta_candidate, rat])
-            if rat > self.A:
+            if rat > self.A and self.classifiers[t].theta_a == -maxint:
                 if rat > best_ratio_a:
                     best_ratio_a = rat
                     self.classifiers[t].theta_a = theta_candidate
-            if rat < self.B:
+            if rat < self.B and self.classifiers[t].theta_b == maxint:
                 # if and self.classifiers[t].theta_b == +maxint:
                 if rat > best_ratio_b:
                     best_ratio_b = rat
@@ -195,7 +195,7 @@ class StrongClassifier(object):
         # assert self.classifiers[t].theta_a != -maxint
         # assert self.classifiers[t].theta_b != +maxint
         # assert self.classifiers[t].theta_a < self.classifiers[t].theta_b
-        # plot_ratios(r, self.classifiers[t].theta_a, self.classifiers[t].theta_b)
+        plot_ratios(r, self.classifiers[t].theta_a, self.classifiers[t].theta_b)
 
     def _fetch_best_weak_classifier(self, weighted_patches):
         """ Returns the weak classifier that produces the least error for a given training set
