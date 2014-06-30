@@ -1,5 +1,6 @@
 import random
 import cv2
+import numpy as np
 
 from frameStream import VideoFileIS
 from modules.classifier.annotationStream import AnnotationStream
@@ -15,6 +16,8 @@ class TrainingStream(object):
         self.curr_image = None
         self.cursor = 0
 
+        self.unused_frames = self.annotation_stream.get_annotated_frame_ids()
+
     def extract_training_patches(self, l, negative_ratio=1.):
         ret = []
         print "Extracting", l, "training samples",
@@ -27,6 +30,54 @@ class TrainingStream(object):
                 print ".",
         print "[DONE]"
         return ret[0:l]
+
+    def get_minimal_training_set(self, haar_holder, patch_count):
+        """ Returns a numpy array containing entries [feature_id, true_label, feature_response]
+        :param haar_holder: Haar feature holder
+        :param patch_count: Count of patches to be used
+        :return: numpy ndarray of size(patch_count * len(haar_holder), 3)
+        """
+        ret_size = patch_count * len(haar_holder)
+        ret = np.zeros(shape=(ret_size, 3))
+
+        patches = self.get_random_patches_no_replacement(patch_count, negative_ratio=1.)
+
+        ret_index = 0
+        dec = .05
+        print "Constructing training set consisting of %d samples" % ret_size,
+        for feature in haar_holder.get_features():
+            feature_id = feature.get_id()
+            for patch in patches:
+                if ret_index > ret_size * dec:
+                    print ".",
+                    dec += .05
+
+                true_label = patch.label
+                response = feature.apply(patch.crop)
+                ret[ret_index, :] = [feature_id, true_label, response]
+                ret_index += 1
+        print "[DONE]"
+        return ret
+
+    def get_random_patches_no_replacement(self, training_set_size, negative_ratio=1.):
+        ret = []
+
+        while True:
+            # without replacement bit
+            frame_id = self.unused_frames[random.randint(0, len(self.unused_frames)-1)]
+            self.unused_frames.remove(frame_id)
+
+            annotations = self.annotation_stream.get_annotations(frame_id)
+            img = self.input_stream.get_grayscale_img(frame_id)
+
+            ret.extend(self._extract_patches(img, annotations, negative_ratio))
+
+            if len(ret) > training_set_size:
+                break
+            if not self.unused_frames:
+                print "No more frames to sample from, returning training set of size %d" % len(ret)
+                break
+        return ret[0:training_set_size]
 
     def get_random_patches(self, negative_ratio=1.):
         frame_ids = self.annotation_stream.get_annotated_frame_ids()

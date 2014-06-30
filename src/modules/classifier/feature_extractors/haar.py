@@ -16,6 +16,10 @@ class HaarFeature(object):
     def __str__(self):
         return "Type: %d, height: %d, width: %d, x: %d, y: %d" % (self.type, self.h, self.w, self.i, self.j)
 
+    def get_id(self):
+
+        return -1
+
     def apply(self, img):  # TODO change signature to apply(self, patch)
         ret = None
 
@@ -53,9 +57,9 @@ class HaarFeature(object):
             ret = S1 - S2 + S3
         if self.type == 2:
             S1 = img[self.i, self.j] - img[self.i, self.j + self.w - 1] \
-                 - img[self.i + self.h - 1, self.j] + img[self.i + self.h - 1, self.j + self.w - 1]
+                - img[self.i + self.h - 1, self.j] + img[self.i + self.h - 1, self.j + self.w - 1]
             S2 = img[self.i + self.h, self.j] - img[self.i + self.h, self.j + self.w - 1] \
-                 - img[self.i + 2 * self.h - 1, self.j] + img[self.i + 2 * self.h - 1, self.j + self.w - 1]
+                - img[self.i + 2 * self.h - 1, self.j] + img[self.i + 2 * self.h - 1, self.j + self.w - 1]
             ret = S1 - S2
         if self.type == 3:
             S1 = img[self.i, self.j] - img[self.i, self.j + self.w - 1] \
@@ -112,46 +116,49 @@ class HaarHolder(FeatureHolder):
         self.features = []
         for i in range(w):
             for j in range(h):
-                height = 12
+                height = 1
                 while i + height - 1 < h:
-                    width = 12
+                    width = 1
                     while j + 2 * width - 1 < w:
                         feat = HaarFeature(0, height, width, i, j)
                         self.features.append(feat)
                         width += 1
                     height += 1
-                height = 12
+                height = 1
                 while i + height - 1 < h:
-                    width = 12
+                    width = 1
                     while j + 3 * width - 1 < w:
                         feat = HaarFeature(1, height, width, i, j)
                         self.features.append(feat)
                         width += 1
                     height += 1
-                width = 12
+                width = 1
                 while j + width - 1 < w:
-                    height = 12
+                    height = 1
                     while i + 2 * height - 1 < h:
                         feat = HaarFeature(2, height, width, i, j)
                         self.features.append(feat)
                         height += 1
                     width += 1
-                width = 12
+                width = 1
                 while j + width - 1 < w:
-                    height = 12
+                    height = 1
                     while i + 3 * height - 1 < h:
                         feat = HaarFeature(3, height, width, i, j)
                         self.features.append(feat)
                         height += 1
                     width += 1
-                height = 12
+                height = 1
                 while i + 2 * height - 1 < h:
-                    width = 12
+                    width = 1
                     while j + 2 * width - 1 < w:
                         feat = HaarFeature(4, height, width, i, j)
                         self.features.append(feat)
                         width += 1
                     height += 1
+
+    def __len__(self):
+        return len(self.features)
 
     def get_features(self):
         return self.features
