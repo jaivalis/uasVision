@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 
 
 def plot_histograms(pos_labeled_data, neg_labeled_data):
-    # hist, bins = np.histogram(height, 50)
-    # center = (min(pos_labeled_data[:, 1]) + max(pos_labeled_data[:, 1])) / 2
     plt.hist(pos_labeled_data[:, 0], bins=50, alpha=.5, color='blue')
     plt.hist(neg_labeled_data[:, 0], bins=50, alpha=.5, color='red')
     plt.show()
@@ -48,9 +46,23 @@ def sum_of_gaussians(data, lin_space, h):
     return ret
 
 
+def get_two_kdes(positives, negatives, h):
+    margin = max(max(negatives)-min(negatives), max(positives)-min(positives))
+    min_neg = min(negatives) - margin
+    max_neg = max(negatives) + margin
+    min_pos = min(positives) - margin
+    max_pos = max(positives) + margin
+    xs_n = np.linspace(min_neg, max_neg, 1000)
+    xs_p = np.linspace(min_pos, max_pos, 1000)
+    kde_n = sum_of_gaussians(negatives, xs_n, h)
+    kde_p = sum_of_gaussians(positives, xs_p, h)
+    return kde_n, kde_p, xs_n, xs_p
+
+
 def plot_gaussians(neg_ratios, pos_ratios, sigma, h):
     """
-    :param data: As acquired from classifier, annotated
+    :param neg_ratios: As acquired from classifier, annotated
+    :param pos_ratios: As acquired from classifier, annotated
     :param sigma: Standard deviation
     :param h: Kernel width
     :return: void
@@ -66,7 +78,7 @@ def plot_gaussians(neg_ratios, pos_ratios, sigma, h):
     for xx in positives:
         x = xx
         kernel_xs = np.linspace(x - 2*sigma, x + 2*sigma)
-        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma)) * 0.4  # scaling just so it looks better
+        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma))
         if first:
             ax[0].plot(kernel_xs, kernel_ys, 'b--', linewidth=1, label=' positive Kernels')
             first = False
@@ -76,22 +88,14 @@ def plot_gaussians(neg_ratios, pos_ratios, sigma, h):
     for xx in negatives:
         x = xx
         kernel_xs = np.linspace(x - 2*sigma, x + 2*sigma)
-        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma)) * 0.4  # scaling just so it looks better
+        kernel_ys = np.array(pdf_gaussian(kernel_xs, x, sigma))
         if first:
             ax[1].plot(kernel_xs, kernel_ys, 'r--', linewidth=1, label=' negative Kernels')
             first = False
         else:
             ax[1].plot(kernel_xs, kernel_ys, 'r--', linewidth=1)
-    # plot kernel density estimator (sum of individual kernels)
-    margin = max(max(negatives)-min(negatives), max(positives)-min(positives))
-    min_neg = min(negatives) - margin
-    max_neg = max(negatives) + margin
-    min_pos = min(positives) - margin
-    max_pos = max(positives) + margin
-    xs_n = np.linspace(min_neg, max_neg, 100)
-    xs_p = np.linspace(min_pos, max_pos, 100)
-    kde_n = sum_of_gaussians(negatives, xs_n, h)
-    kde_p = sum_of_gaussians(positives, xs_p, h)
+
+    kde_n, kde_p, xs_n, xs_p = get_two_kdes(positives, negatives, h)
 
     # plot Kernel density estimation
     ax[0].plot(xs_p, kde_p, linewidth=3, color='blue', label='positive KDE')
@@ -136,7 +140,7 @@ def plot_wc(wc):
     p = plt.scatter(pos[:, 0], y_p, weights_pos * len(y_p + y_n) * 40, 'b', label='')
     n = plt.scatter(neg[:, 0], y_n, weights_neg * len(y_p + y_n) * 40, 'r')
     plt.errorbar(wc.threshold, 0, yerr=0.5, linestyle="dashed", marker="None", color="green")
-    legend_str1 = "{%.2f < threshold < %.2f" % (smaller_neg_w, bigger_pos_w)
-    legend_str2 = "{%.2f < threshold < %.2f" % (smaller_neg_w, bigger_neg_w)
+    legend_str1 = "%.2f < threshold < %.2f" % (smaller_neg_w, bigger_pos_w)
+    legend_str2 = "%.2f < threshold < %.2f" % (smaller_neg_w, bigger_neg_w)
     plt.legend([p, n], [legend_str1, legend_str2])
     plt.show()

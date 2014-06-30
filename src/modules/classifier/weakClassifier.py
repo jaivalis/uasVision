@@ -26,9 +26,9 @@ class WeakClassifier(object):
         """
         response = self.feature.apply(patch.crop)
         if response < self.threshold:
-            return -1
+            return self.conf_left
         else:
-            return +1
+            return self.conf_right
 
     def train(self, weighted_patches):
         self.annotated_responses = None  # clear the previous training samples
@@ -113,7 +113,7 @@ class WeakClassifier(object):
         sigma = np.std(self.annotated_responses)
         n = len(self.annotated_responses)
         h = 1.144 * sigma * n ** (-1 / 5)
-        plot_gaussians(self.annotated_responses, sigma, h)
+        # plot_gaussians(self.annotated_responses, sigma, h)
 
     def visualize(self, patch):
         crop = patch.crop / 255
@@ -135,6 +135,6 @@ class WeakClassifier(object):
             theta_b = +999
         if alpha is None:
             alpha = -999
-        plot_wc(self)
+        # plot_wc(self)
         return "Feature: {%s} threshold: %.1f, error: %.2f, alpha: %.2f, theta_a: %.2f, theta_b: %.2f\n\t\t%s" % \
                (self.feature, self.threshold, self.error, alpha, theta_a, theta_b, self.get_classifications_string())
