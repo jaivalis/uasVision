@@ -116,41 +116,41 @@ class HaarHolder(FeatureHolder):
         self.features = []
         for i in range(w):
             for j in range(h):
-                height = 1
+                height = 6
                 while i + height - 1 < h:
-                    width = 1
+                    width = 6
                     while j + 2 * width - 1 < w:
                         feat = HaarFeature(0, height, width, i, j)
                         self.features.append(feat)
                         width += 1
                     height += 1
-                height = 1
+                height = 6
                 while i + height - 1 < h:
-                    width = 1
+                    width = 6
                     while j + 3 * width - 1 < w:
                         feat = HaarFeature(1, height, width, i, j)
                         self.features.append(feat)
                         width += 1
                     height += 1
-                width = 1
+                width = 6
                 while j + width - 1 < w:
-                    height = 1
+                    height = 6
                     while i + 2 * height - 1 < h:
                         feat = HaarFeature(2, height, width, i, j)
                         self.features.append(feat)
                         height += 1
                     width += 1
-                width = 1
+                width = 6
                 while j + width - 1 < w:
-                    height = 1
+                    height = 6
                     while i + 3 * height - 1 < h:
                         feat = HaarFeature(3, height, width, i, j)
                         self.features.append(feat)
                         height += 1
                     width += 1
-                height = 1
+                height = 6
                 while i + 2 * height - 1 < h:
-                    width = 1
+                    width = 6
                     while j + 2 * width - 1 < w:
                         feat = HaarFeature(4, height, width, i, j)
                         self.features.append(feat)

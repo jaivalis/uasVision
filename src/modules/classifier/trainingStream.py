@@ -31,6 +31,32 @@ class TrainingStream(object):
         print "[DONE]"
         return ret[0:l]
 
+    def get_training_set(self, haar_holder, patch_count):
+        training = np.zeros(shape=(patch_count, len(haar_holder)))
+        labels = np.zeros(patch_count)
+
+        patches = self.get_random_patches_no_replacement(patch_count, negative_ratio=1.)
+
+        f_i = 0
+
+        dec = .05
+        print "Constructing training set consisting of %d samples" % (len(haar_holder)*patch_count),
+        for feature in haar_holder.get_features():
+            p_i = 0
+            if f_i > len(haar_holder) * dec:
+                print ".",
+                dec += .05
+            for patch in patches:
+                response = feature.apply(patch.crop)
+                training[p_i, f_i] = response
+                labels[p_i] = patch.label
+
+                p_i += 1
+            f_i += 1
+        print "[DONE]"
+
+        return training, labels
+
     def get_minimal_training_set(self, haar_holder, patch_count):
         """ Returns a numpy array containing entries [feature_id, true_label, feature_response]
         :param haar_holder: Haar feature holder

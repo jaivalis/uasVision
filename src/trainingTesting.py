@@ -9,7 +9,6 @@ from modules.classifier.trainingStream import TrainingStream
 from modules.classifier.feature_extractors.haar import HaarHolder
 from modules.classifier.classifier import *
 from modules.util.serializer import *
-from modules.persistence.persistense import Persistence
 
 vidPaths = ['../dataset/videos/GOPR0809_start_0_27_end_1_55.mp4']
 annPaths = ['../dataset/annotations/sanitized/COW809_1_sane.txt']
