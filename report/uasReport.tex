@@ -10,6 +10,7 @@
 
 \author{Tobias Stahl \\ 10528199 \and Ioannis-Giounous Aivalis \\ 10524851}
 
+\usepackage{amsmath}
 \begin{document}
 
 \maketitle
@@ -87,14 +88,16 @@ The data set consists of two videos, each containing approximately 5000 frames e
 \section{Implementation}
 In this section we explain some of the characteristics of our implementation.
 \subsection{Weak Learner}
-The weak learner is a decision stump with the threshold minimizing the classification error of the weighted patches. In order to speedup the threshold search the scikit-learn\footnote{http://scikit-learn.org/} \texttt{DecisionTreeClassifier} was used.
+The weak learner is a decision stump with the threshold minimizing the classification error of the weighted patches. Initially our own method was tested to make the threshold evaluation, however in order to speedup the threshold search the scikit-learn\footnote{http://scikit-learn.org/} \texttt{DecisionTreeClassifier} was used.
 \subsection{Image Preprocessing}
 In order to obtain a unique size of feature sets per image patch, each patch needed to be downsampled to 24x24, which results in 162336 Haar-like features per patch similarly to the Viola and Jones implementation. Due to speeding benefit and the insignificance of the smallest Haar-like features we subsampled only Haar-like features with a size of at least 6 pixels, which reduced the feature set to 86406 per image patch.
 
 \section{Results}
 In this section we will sum up the results we obtained from running the detector that occured from using our classifier. For this detector we made use of the sliding window approach with a vertical and horizontal pixel skip rate of 6 pixels since speed is of the essense.
+
 \subsection{Best Features}
 The best features are the ones who are picked for minimizing the error. Those are contained in the top performing weak learners. For simplicity reasons and due to the fact that we used one hundred layers or more for our experiments we illustrate the top four of those in Table \ref{best_features}. In the separate figures we see the exact picel posisions which they occupy in the patches. It seems like those features capture the variation between the animal and the background since they are located on the edge of the cows.
+
 \begin{tabular}{llll}
 \includegraphics[scale=0.75]{res/f1.png}
 & 
@@ -118,17 +121,27 @@ The best features are the ones who are picked for minimizing the error. Those ar
 \captionof{table}{The four best features as chosen by the strong classifier} 
 
 \subsection{Accuracy}
-discrete, layers = 300, - Adaboost Classifier error: 0.052000
-real, layer = 100,        Real Adaboost Classifier error: 0.048000
-pretty good!
+In calculating the accuracy of our detector we made a split of 750 training samples over 250 validation samples. The numbers contained in Table \ref{accuracy} indicate the errors we obtained for two settings of the classifier. The difference lies in the number of layers the strong classifier consists of.\\
+\begin{center}
+\begin{tabular}{l|c}
+	Method type          & \textbf{Error} \\
+	\hline
+	300 Layers, Discrete & 0.052 \\
+	100 Layers, Real     & 0.048 \\
+\end{tabular}
+\label{accuracy}
+\end{center}
+It seems like 300 layers are too many for our data set since the classifier is overfitting in that case increasing the error rate. However in both setups we achieve a very satisfactory error rate of less than 10\%.
+
 \subsection{Time}
-how long does the qualifier need for one image? our actual goal is to have less then 2 seconds
+The initial time constraint was to achieve timing less than two seconds per frame since the drone feeds pictures every two seconds. Unfortunatelly we were not able to break this barrier since classification of images takes well over 8 seconds per picture on average. Due to time constraints we were not able to emphasise on this area, however we are confident that the timing could be improved if more effort is put into it.\\
+Changing the programming environment from a \texttt{Python} implementation to \texttt{C/C++} would most likely greatly improve this area.
 
 \section{Conclusion}
 For this task we have familiarized ourselves with state-of-the-art machine learning algorithms such as Adaboost and Waldboost, we had to implement both and we gained a lot of insight in the area of computer vision and object detection algorithms. We have implemented an effitient codebase which is made available to be extended for future work and we are hopefull our implementation will be used for the cause of helping the rangers in South Africa to protect an endangered species.  
 
 \section{Future Work}
-For tackling a real world problem like the one at hand plenty of extentions have been taken into consideration. First, we think that the training time needed to extract more Haar features compared to the accuracy return of this process will be insignificant. Therefore we would consider using more than five Haar feature types. The effects of this process have been analyzed by Lienhart et al \cite{Lienhart02anextended} and show that such an approach is indeed benefitial for this cause. Another aspect that could enhance the performance of the detector would be not isolating the detection task, instead using some kind of tracking in order to improve the detection rates. Tracking would provide limit false detections and perhaps enable for animal counting, a task which is already under implementation. Lastly, the drone is still under construction, however when the final form of it is determined, information indicating the altitude as well as the angle of the camera could help limit the search space for the sliding window approach of the detector, since the drone flies at variant heights. 
+For tackling a real world problem like the one at hand plenty of extentions have been taken into consideration. First, we think that the training time needed to extract more Haar features compared to the accuracy return of this process will be insignificant. Therefore we would consider using more than five Haar feature types. The effects of this process have been analyzed by Lienhart et al \cite{Lienhart02anextended} and show that such an approach is indeed benefitial for this cause. Another aspect that 5could enhance the performance of the detector would be not isolating the detection task, instead using some kind of tracking in order to improve the detection rates. Tracking would provide limit false detections and perhaps enable for animal counting, a task which is already under implementation. Lastly, the drone is still under construction, however when the final form of it is determined, information indicating the altitude as well as the angle of the camera could help limit the search space for the sliding window approach of the detector, since the drone flies at variant heights. 
 
 
 \section{Acknowledgement}
